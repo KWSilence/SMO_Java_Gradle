@@ -1,0 +1,12 @@
+{
+  "requestsCount": 10,
+  "bufferCapacity": 3,
+  "sources": [
+    1,
+    2
+  ],
+  "processors": [
+    1,
+    2
+  ]
+}
