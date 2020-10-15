@@ -8,7 +8,7 @@ version '1.0'
 
 jar {
     manifest {
-        attributes "Main-Class": "Main"
+        attributes "Main-Class": "gui.MainGUI"
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
@@ -25,4 +25,6 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
 
+    // https://mvnrepository.com/artifact/com.miglayout/miglayout
+    compile group: 'com.miglayout', name: 'miglayout', version: '3.7.4'
 }
