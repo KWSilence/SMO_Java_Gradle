@@ -11,6 +11,7 @@ public class SelectionManager
   private final Buffer buffer;
   private Processor takeProcessor;
   private Processor freeProcessor;
+  private Request lastRequest;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
 
@@ -52,32 +53,50 @@ public class SelectionManager
     return freeProcessor.getProcessTime();
   }
 
-  public void putToProcessor()
+  public Request getLastRequest()
+  {
+    return lastRequest;
+  }
+
+  public Processor getTakeProcessor()
+  {
+    return takeProcessor;
+  }
+
+  public Processor getFreeProcessor()
+  {
+    return freeProcessor;
+  }
+
+  public boolean putToProcessor()
   {
     selectNearestWorkEvent();
-    ;
-    if (canTake())
+
+    boolean take = canTake();
+
+    if (take)
     {
-      Request bufferRequest = buffer.getRequest();
-      double time = takeProcessor.getProcessTime() - bufferRequest.getTime();
-      bufferRequest.setTimeInBuffer((time > 0) ? time : 0);
-      System.out.println(
-        "Processor #" + (takeProcessor.getNumber() + 1) + " take #" + (bufferRequest.getSourceNumber() + 1) + "." +
-        (bufferRequest.getNumber() + 1) + " (GT:" + formatter.format(bufferRequest.getTime()) + ", BT:" +
-        formatter.format(bufferRequest.getTimeInBuffer()) + ", ST:" +
-        formatter.format(bufferRequest.getTimeInBuffer() + bufferRequest.getTime()) + ")");
-      takeProcessor.process(bufferRequest);
+      lastRequest = buffer.getRequest();
+      double time = takeProcessor.getProcessTime() - lastRequest.getTime();
+      lastRequest.setTimeInBuffer((time > 0) ? time : 0);
+//      System.out.println(
+//        "Processor #" + (takeProcessor.getNumber() + 1) + " take #" + (lastRequest.getSourceNumber() + 1) + "." +
+//        (lastRequest.getNumber() + 1) + " (GT:" + formatter.format(lastRequest.getTime()) + ", BT:" +
+//        formatter.format(lastRequest.getTimeInBuffer()) + ", ST:" +
+//        formatter.format(lastRequest.getTimeInBuffer() + lastRequest.getTime()) + ")");
+      takeProcessor.process(lastRequest);
     }
+    return take;
   }
 
   public double freeProcessor()
   {
-    Request request = freeProcessor.free();
-    successRequests.get(request.getSourceNumber()).add(request);
-    System.out.println(
-      "Processor #" + (freeProcessor.getNumber() + 1) + " end #" + (request.getSourceNumber() + 1) + "." +
-      (request.getNumber() + 1) + " (PT:" + formatter.format(freeProcessor.getRequest().getTimeInProcessor()) +
-      ", ET:" + formatter.format(freeProcessor.getProcessTime()) + ") ");
+    lastRequest = freeProcessor.free();
+    successRequests.get(lastRequest.getSourceNumber()).add(lastRequest);
+//    System.out.println(
+//      "Processor #" + (freeProcessor.getNumber() + 1) + " end #" + (lastRequest.getSourceNumber() + 1) + "." +
+//      (lastRequest.getNumber() + 1) + " (PT:" + formatter.format(freeProcessor.getRequest().getTimeInProcessor()) +
+//      ", ET:" + formatter.format(freeProcessor.getProcessTime()) + ") ");
     return freeProcessor.getProcessTime();
   }
 

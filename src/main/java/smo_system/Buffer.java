@@ -8,6 +8,7 @@ public class Buffer
 {
   private final int capacity;
   private final ArrayList<Request> list;
+  private int takeIndex;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
 
@@ -15,6 +16,7 @@ public class Buffer
   {
     this.capacity = capacity;
     this.list = new ArrayList<>();
+    this.takeIndex = 0;
   }
 
   public boolean isEmpty()
@@ -27,9 +29,24 @@ public class Buffer
     return (list.size() == capacity);
   }
 
+  public int getTakeIndex()
+  {
+    return takeIndex;
+  }
+
   public int getSize()
   {
     return list.size();
+  }
+
+  public ArrayList<Request> getList()
+  {
+    return list;
+  }
+
+  public int getCapacity()
+  {
+    return capacity;
   }
 
   public void printList()
@@ -63,9 +80,9 @@ public class Buffer
     {
       return null;
     }
-    int index = getPriorityIndex();
-    Request request = list.get(index);
-    list.remove(index);
+    takeIndex = getPriorityIndex();
+    Request request = list.get(takeIndex);
+    list.remove(takeIndex);
     return request;
   }
 

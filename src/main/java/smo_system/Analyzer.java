@@ -19,7 +19,7 @@ public class Analyzer
     public double bufferTimeDispersion = 0;
     public double processTimeDispersion = 0;
 
-    public double usageRate;
+    public double usageRate = 0;
 
     Results(boolean isSource)
     {
@@ -29,28 +29,28 @@ public class Analyzer
 
 
   private final Simulator simulator;
-  private final ArrayList<Results> sourcesResult;
-  private final ArrayList<Results> processorsResult;
+  private final ArrayList<ArrayList<Results>> results;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
 
   Analyzer(Simulator simulator)
   {
     this.simulator = simulator;
-    this.sourcesResult = new ArrayList<>();
-    this.processorsResult = new ArrayList<>();
+    this.results = new ArrayList<>();
   }
 
-  public Analyzer(String fileName, boolean steps)
+  public Analyzer(String fileName)
   {
     this.simulator = new Simulator(fileName);
-    simulator.startSimulation(steps);
-    this.sourcesResult = new ArrayList<>();
-    this.processorsResult = new ArrayList<>();
+    this.results = new ArrayList<>();
   }
 
-  public void analyze()
+  public void analyze(boolean simulated)
   {
+    if (!simulated)
+    {
+      simulator.startSimulation(false);
+    }
     analyzeSources();
     analyzeProcessors();
     printResults();
@@ -59,29 +59,36 @@ public class Analyzer
   private void printResults()
   {
     System.out.println("--------------Analyzer--------------");
-    System.out.println("Sources:");
-//    System.out.println("Source\t|\tRequestCount\t|\tRejectProbability\t|\tLifeTime\t|\tBufferTime" +
-//                       "\t|\tProcessTime\t|\tBufferTimeDispersion\t|\tProcessTimeDispersion");
-    System.out.println("S\t|\tRC\t|\tRP\t\t|\tLT\t\t|\tBT\t\t|\tPT\t\t|\tBTD\t\t|\tPTD");
-    for (Results r : sourcesResult)
+    for (ArrayList<Results> ar : results)
     {
-      System.out.println(
-        (r.number+1) + "\t|\t" + r.requestCount + "\t|\t" + formatter.format(r.rejectProbability) + "\t|\t" +
-        formatter.format(r.lifeTime) + "\t|\t" + formatter.format(r.bufferTime) + "\t|\t" +
-        formatter.format(r.processTime) + "\t|\t" + formatter.format(r.bufferTimeDispersion) + "\t|\t" +
-        formatter.format(r.processTimeDispersion));
-    }
-    System.out.println("Processors:");
-//    System.out.println("Processor\t|\tUsageRate");
-    System.out.println("P\t|\tUR");
-    for (Results r : processorsResult)
-    {
-      System.out.println((r.number+1) + "\t|\t" + formatter.format(r.usageRate));
+      if (ar.get(0).isSource)
+      {
+        System.out.println("Sources:");
+        System.out.println("S\t|\tRC\t|\tRP\t\t|\tLT\t\t|\tBT\t\t|\tPT\t\t|\tBTD\t\t|\tPTD");
+        for (Results r : ar)
+        {
+          System.out.println(
+            (r.number + 1) + "\t|\t" + r.requestCount + "\t|\t" + formatter.format(r.rejectProbability) + "\t|\t" +
+            formatter.format(r.lifeTime) + "\t|\t" + formatter.format(r.bufferTime) + "\t|\t" +
+            formatter.format(r.processTime) + "\t|\t" + formatter.format(r.bufferTimeDispersion) + "\t|\t" +
+            formatter.format(r.processTimeDispersion));
+        }
+      }
+      else
+      {
+        System.out.println("Processors:");
+        System.out.println("P\t|\tUR");
+        for (Results r : ar)
+        {
+          System.out.println((r.number + 1) + "\t|\t" + formatter.format(r.usageRate));
+        }
+      }
     }
   }
 
   private void analyzeSources()
   {
+    ArrayList<Results> sourcesResult = new ArrayList<>();
     ProductionManager pm = simulator.getProductionManager();
     ArrayList<Source> sources = pm.getSources();
     ArrayList<ArrayList<Request>> rejected = pm.getRejectedRequests();
@@ -104,10 +111,12 @@ public class Analyzer
         a -> Math.pow((a.getTimeInProcessor() - r.processTime), 2) / (r.requestCount - 1)).sum();
       sourcesResult.add(r);
     }
+    results.add(sourcesResult);
   }
 
   private void analyzeProcessors()
   {
+    ArrayList<Results> processorsResult = new ArrayList<>();
     SelectionManager sm = simulator.getSelectionManager();
     ArrayList<Processor> processors = sm.getProcessors();
     double endTime = simulator.getEndTime();
@@ -119,6 +128,6 @@ public class Analyzer
       r.usageRate = p.getWorkTime() / endTime;
       processorsResult.add(r);
     }
+    results.add(processorsResult);
   }
-
 }

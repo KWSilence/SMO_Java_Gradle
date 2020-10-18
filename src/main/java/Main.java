@@ -8,7 +8,7 @@ public class Main
     String fileName = "./config.json";
 //    String fileName = "src/main/resources/config.json";
 
-    Analyzer analyzer = new Analyzer(fileName, false);
-    analyzer.analyze();
+    Analyzer analyzer = new Analyzer(fileName);
+    analyzer.analyze(false);
   }
 }

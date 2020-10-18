@@ -12,6 +12,7 @@ public class ProductionManager
   private final Buffer buffer;
   private int currentRequestCount;
   private final ArrayList<ArrayList<Request>> rejectedRequests;
+  private Request lastRequest;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
 
@@ -23,6 +24,7 @@ public class ProductionManager
     this.maxRequestCount = maxRequestCount;
     this.currentRequestCount = 0;
     this.rejectedRequests = new ArrayList<>();
+    this.lastRequest = null;
     for (int i = 0; i < sources.size(); i++)
     {
       rejectedRequests.add(new ArrayList<>());
@@ -44,25 +46,50 @@ public class ProductionManager
     return currentSource.getTime();
   }
 
+  public int getMaxRequestCount()
+  {
+    return maxRequestCount;
+  }
+
+  public int getCurrentRequestCount()
+  {
+    return currentRequestCount;
+  }
+
+  public boolean canGenerate()
+  {
+    return currentRequestCount != maxRequestCount;
+  }
+
+  public Request getLastRequest()
+  {
+    return lastRequest;
+  }
+
+  public void generate()
+  {
+    lastRequest = currentSource.getRequest();
+  }
+
   public boolean putToBuffer()
   {
-    Request request = currentSource.getRequest();
-    if (!buffer.isFull())
+    boolean full = buffer.isFull();
+    if (!full)
     {
-      buffer.putRequest(request);
-      System.out.println(
-        "Request #" + (request.getSourceNumber() + 1) + "." + (request.getNumber() + 1) + " generated " +
-        formatter.format(request.getTime()) + " put to buffer (" + (buffer.getSize()) + ")");
+      buffer.putRequest(lastRequest);
+//      System.out.println(
+//        "Request #" + (lastRequest.getSourceNumber() + 1) + "." + (lastRequest.getNumber() + 1) + " generated " +
+//        formatter.format(lastRequest.getTime()) + " put to buffer (" + (buffer.getSize()) + ")");
     }
     else
     {
-      rejectedRequests.get(request.getSourceNumber()).add(request);
-      System.out.println(
-        "Request #" + (request.getSourceNumber() + 1) + "." + (request.getNumber() + 1) + " generated " +
-        formatter.format(request.getTime()) + " rejected (" + (buffer.getSize()) + ")");
+      rejectedRequests.get(lastRequest.getSourceNumber()).add(lastRequest);
+//      System.out.println(
+//        "Request #" + (lastRequest.getSourceNumber() + 1) + "." + (lastRequest.getNumber() + 1) + " generated " +
+//        formatter.format(lastRequest.getTime()) + " rejected (" + (buffer.getSize()) + ")");
     }
     currentRequestCount++;
-    return !(currentRequestCount == maxRequestCount);
+    return !full;
   }
 
   public void selectNearestEvent()
