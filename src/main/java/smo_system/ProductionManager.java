@@ -69,6 +69,7 @@ public class ProductionManager
   public void generate()
   {
     lastRequest = currentSource.getRequest();
+    currentRequestCount++;
   }
 
   public boolean putToBuffer()
@@ -77,18 +78,11 @@ public class ProductionManager
     if (!full)
     {
       buffer.putRequest(lastRequest);
-//      System.out.println(
-//        "Request #" + (lastRequest.getSourceNumber() + 1) + "." + (lastRequest.getNumber() + 1) + " generated " +
-//        formatter.format(lastRequest.getTime()) + " put to buffer (" + (buffer.getSize()) + ")");
     }
     else
     {
       rejectedRequests.get(lastRequest.getSourceNumber()).add(lastRequest);
-//      System.out.println(
-//        "Request #" + (lastRequest.getSourceNumber() + 1) + "." + (lastRequest.getNumber() + 1) + " generated " +
-//        formatter.format(lastRequest.getTime()) + " rejected (" + (buffer.getSize()) + ")");
     }
-    currentRequestCount++;
     return !full;
   }
 

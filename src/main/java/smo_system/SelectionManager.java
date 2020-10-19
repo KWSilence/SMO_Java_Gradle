@@ -79,11 +79,6 @@ public class SelectionManager
       lastRequest = buffer.getRequest();
       double time = takeProcessor.getProcessTime() - lastRequest.getTime();
       lastRequest.setTimeInBuffer((time > 0) ? time : 0);
-//      System.out.println(
-//        "Processor #" + (takeProcessor.getNumber() + 1) + " take #" + (lastRequest.getSourceNumber() + 1) + "." +
-//        (lastRequest.getNumber() + 1) + " (GT:" + formatter.format(lastRequest.getTime()) + ", BT:" +
-//        formatter.format(lastRequest.getTimeInBuffer()) + ", ST:" +
-//        formatter.format(lastRequest.getTimeInBuffer() + lastRequest.getTime()) + ")");
       takeProcessor.process(lastRequest);
     }
     return take;
@@ -93,10 +88,6 @@ public class SelectionManager
   {
     lastRequest = freeProcessor.free();
     successRequests.get(lastRequest.getSourceNumber()).add(lastRequest);
-//    System.out.println(
-//      "Processor #" + (freeProcessor.getNumber() + 1) + " end #" + (lastRequest.getSourceNumber() + 1) + "." +
-//      (lastRequest.getNumber() + 1) + " (PT:" + formatter.format(freeProcessor.getRequest().getTimeInProcessor()) +
-//      ", ET:" + formatter.format(freeProcessor.getProcessTime()) + ") ");
     return freeProcessor.getProcessTime();
   }
 

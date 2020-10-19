@@ -2,27 +2,24 @@ package gui;
 
 import configs.SimulationConfig;
 import net.miginfocom.swing.MigLayout;
-import smo_system.Buffer;
-import smo_system.Processor;
-import smo_system.Request;
-import smo_system.Simulator;
+import smo_system.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainGUI
 {
   private final NumberFormat formatter = new DecimalFormat("#0.000");
+  private final boolean debug = true;
+  private Thread lineMover = null;
+  private final HashMap<String, Simulator> simulators = new HashMap<>();
 
   MainGUI()
   {
-    final HashMap<String, Simulator> simulators = new HashMap<>();
-
     simulators.put("steps", null);
     simulators.put("auto", null);
 
@@ -36,7 +33,7 @@ public class MainGUI
       new String[]{"Source", "RequestsGen", "RejectProb", "StayTime", "WaitingTime", "ProcTime", "DisWaitingTime",
                    "DisProcTime"}, 0);
     first.add(new JScrollPane(tf1), "wrap, span, grow");
-    JTable tf2 = createNonEditTable(new String[]{"Processor", "WorkTime"}, 0);
+    JTable tf2 = createNonEditTable(new String[]{"Processor", "UsageRate"}, 0);
     first.add(new JScrollPane(tf2), "wrap, span");
     JProgressBar pbf1 = new JProgressBar();
     pbf1.setMinimum(0);
@@ -75,8 +72,15 @@ public class MainGUI
         Simulator simulator = simulators.get("steps");
         if (simulator == null)
         {
-//          SimulationConfig simulationConfig = new SimulationConfig("config.json"); //Release
-          SimulationConfig simulationConfig = new SimulationConfig("src/main/resources/config.json");
+          SimulationConfig simulationConfig = null;
+          if (debug)
+          {
+            simulationConfig = new SimulationConfig("src/main/resources/config.json");
+          }
+          else
+          {
+            simulationConfig = new SimulationConfig("config.json"); //TODO Release
+          }
 
           clearTable(ts1);
           initTableRows(ts1, simulationConfig.getSources().size());
@@ -164,7 +168,36 @@ public class MainGUI
             }
 
             case ANALYZE -> {
-              //TODO (move to auto page|create new tmp page), analyze
+              Analyzer analyzer = new Analyzer(simulator);
+              analyzer.analyze(true);
+              tps1.append("Simulation was analyzed.");
+              ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
+              ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
+              clearTable(tf1);
+              initTableRows(tf1, sr.size());
+              clearTable(tf2);
+              initTableRows(tf2, pr.size());
+
+              for (int i = 0; i < sr.size(); i++)
+              {
+                ArrayList<String> el = sr.get(i);
+                for (int j = 1; j < el.size(); j++)
+                {
+                  tf1.setValueAt(el.get(j), i, j);
+                }
+              }
+
+              for (int i = 0; i < pr.size(); i++)
+              {
+                ArrayList<String> el = pr.get(i);
+                for (int j = 1; j < el.size(); j++)
+                {
+                  tf2.setValueAt(el.get(j), i, j);
+                }
+              }
+
+              tabbedPane.setSelectedIndex(0);
+              bs2.setEnabled(false);
             }
           }
           pbs1.setValue(simulator.getProgress());
@@ -180,7 +213,92 @@ public class MainGUI
       simulators.get("steps").interrupt();
       simulators.put("steps", null);
       bs2.setText("Start Steps");
+      bs2.setEnabled(true);
       bs1.setEnabled(false);
+    });
+
+    bf2.addActionListener(e -> {
+      SimulationConfig simulationConfig = null;
+      if (debug)
+      {
+        simulationConfig = new SimulationConfig("src/main/resources/config.json");
+      }
+      else
+      {
+        simulationConfig = new SimulationConfig("config.json"); //TODO Release
+      }
+
+      clearTable(tf1);
+      initTableRows(tf1, simulationConfig.getSources().size());
+      clearTable(tf2);
+      initTableRows(tf2, simulationConfig.getProcessors().size());
+
+      pbf1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
+      pbf1.setValue(0);
+
+      simulators.put("auto", new Simulator(simulationConfig));
+      Simulator simulator = simulators.get("auto");
+      simulator.setUseSteps(false);
+
+      bf2.setEnabled(false);
+      bf1.setEnabled(true);
+
+      lineMover = new Thread(() -> {
+        Simulator s = simulators.get("auto");
+        s.start();
+        while (true)
+        {
+          if (s.isInterrupted())
+          {
+            return;
+          }
+          if (!s.isAlive())
+          {
+            break;
+          }
+          pbf1.setValue(s.getProgress());
+        }
+        Analyzer analyzer = new Analyzer(s);
+        analyzer.analyze(true);
+        ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
+        ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
+        clearTable(tf1);
+        initTableRows(tf1, sr.size());
+        clearTable(tf2);
+        initTableRows(tf2, pr.size());
+
+        for (int i = 0; i < sr.size(); i++)
+        {
+          ArrayList<String> el = sr.get(i);
+          for (int j = 1; j < el.size(); j++)
+          {
+            tf1.setValueAt(el.get(j), i, j);
+          }
+        }
+
+        for (int i = 0; i < pr.size(); i++)
+        {
+          ArrayList<String> el = pr.get(i);
+          for (int j = 1; j < el.size(); j++)
+          {
+            tf2.setValueAt(el.get(j), i, j);
+          }
+        }
+
+        simulators.put("auto", null);
+        bf2.setEnabled(true);
+        bf1.setEnabled(false);
+      });
+
+      lineMover.start();
+    });
+
+    bf1.addActionListener(e -> {
+      simulators.get("auto").interrupt();
+      lineMover.interrupt();
+      simulators.put("auto", null);
+      bf2.setEnabled(true);
+      bf1.setEnabled(false);
     });
 
     frame.add(tabbedPane);

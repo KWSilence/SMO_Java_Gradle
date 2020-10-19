@@ -49,26 +49,6 @@ public class Buffer
     return capacity;
   }
 
-  public void printList()
-  {
-    if (!isEmpty())
-    {
-      System.out.println("---------------BUFFER---------------");
-      int index = 0;
-      for (Request r : list)
-      {
-        System.out.println((++index) + " #" + (r.getSourceNumber() + 1) + "." + (r.getNumber() + 1) + " created " +
-                           formatter.format(r.getTime()));
-      }
-      for (int i = index + 1; i <= capacity; i++)
-      {
-        System.out.println(i + " EMPTY");
-      }
-      System.out.println("____________________________________");
-    }
-
-  }
-
   public void putRequest(Request request)
   {
     list.add(request);
