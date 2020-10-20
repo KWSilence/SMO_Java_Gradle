@@ -1,7 +1,5 @@
 package smo_system;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 
 public class Buffer
@@ -9,8 +7,6 @@ public class Buffer
   private final int capacity;
   private final ArrayList<Request> list;
   private int takeIndex;
-
-  private final NumberFormat formatter = new DecimalFormat("#0.000");
 
   public Buffer(int capacity)
   {

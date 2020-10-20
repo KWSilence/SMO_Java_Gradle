@@ -9,9 +9,7 @@ import java.util.ArrayList;
 
 public class Simulator extends Thread
 {
-  //  private final ArrayList<Source> sources;
   private final Buffer buffer;
-  //  private final ArrayList<Processor> processors;
   private double endTime;
   private boolean useSteps;
   private final SimulatorEvent lastEvent;
@@ -25,9 +23,7 @@ public class Simulator extends Thread
   {
     SimulationConfig config = new SimulationConfig(fileName);
 
-//    this.sources = config.getSources();
     this.buffer = config.getBuffer();
-//    this.processors = config.getProcessors();
     this.productionManager = config.getProductionManager();
     this.selectionManager = config.getSelectionManager();
     this.endTime = 0;
@@ -37,9 +33,7 @@ public class Simulator extends Thread
 
   public Simulator(SimulationConfig config)
   {
-//    this.sources = config.getSources();
     this.buffer = config.getBuffer();
-//    this.processors = config.getProcessors();
     this.productionManager = config.getProductionManager();
     this.selectionManager = config.getSelectionManager();
     this.endTime = 0;
@@ -49,9 +43,7 @@ public class Simulator extends Thread
 
   Simulator(ArrayList<Source> sources, Buffer buffer, ArrayList<Processor> processors, int requestsCount)
   {
-//    this.sources = sources;
     this.buffer = buffer;
-//    this.processors = processors;
     this.productionManager = new ProductionManager(sources, buffer, requestsCount);
     this.selectionManager = new SelectionManager(processors, buffer);
     this.endTime = 0;
@@ -86,14 +78,7 @@ public class Simulator extends Thread
 
   public int getProgress()
   {
-    ArrayList<ArrayList<Request>> rr = productionManager.getRejectedRequests();
-    ArrayList<ArrayList<Request>> sr = selectionManager.getSuccessRequests();
-    int count = 0;
-    for (int i = 0; i < rr.size(); i++)
-    {
-      count += rr.get(i).size() + sr.get(i).size();
-    }
-    return count;
+    return (productionManager.getFullRejectCount() + selectionManager.getFullSuccessCount());
   }
 
   @Override

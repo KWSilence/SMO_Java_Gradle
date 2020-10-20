@@ -1,7 +1,5 @@
 package smo_system;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 
 public class ProductionManager
@@ -13,8 +11,6 @@ public class ProductionManager
   private int currentRequestCount;
   private final ArrayList<ArrayList<Request>> rejectedRequests;
   private Request lastRequest;
-
-  private final NumberFormat formatter = new DecimalFormat("#0.000");
 
   public ProductionManager(ArrayList<Source> sources, Buffer buffer, int maxRequestCount)
   {
@@ -64,6 +60,16 @@ public class ProductionManager
   public Request getLastRequest()
   {
     return lastRequest;
+  }
+
+  public int getFullRejectCount()
+  {
+    int counter = 0;
+    for (ArrayList<Request> ar : rejectedRequests)
+    {
+      counter += ar.size();
+    }
+    return counter;
   }
 
   public void generate()

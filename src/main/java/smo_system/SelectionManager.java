@@ -1,7 +1,5 @@
 package smo_system;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 
 public class SelectionManager
@@ -12,8 +10,6 @@ public class SelectionManager
   private Processor takeProcessor;
   private Processor freeProcessor;
   private Request lastRequest;
-
-  private final NumberFormat formatter = new DecimalFormat("#0.000");
 
   public SelectionManager(ArrayList<Processor> processors, Buffer buffer)
   {
@@ -66,6 +62,16 @@ public class SelectionManager
   public Processor getFreeProcessor()
   {
     return freeProcessor;
+  }
+
+  public int getFullSuccessCount()
+  {
+    int counter = 0;
+    for (ArrayList<Request> ar : successRequests)
+    {
+      counter += ar.size();
+    }
+    return counter;
   }
 
   public boolean putToProcessor()

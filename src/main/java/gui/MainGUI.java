@@ -31,9 +31,9 @@ public class MainGUI
     JPanel first = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
     JTable tf1 = createNonEditTable(
       new String[]{"Source", "RequestsGen", "RejectProb", "StayTime", "WaitingTime", "ProcTime", "DisWaitingTime",
-                   "DisProcTime"}, 0);
+                   "DisProcTime"});
     first.add(new JScrollPane(tf1), "wrap, span, grow");
-    JTable tf2 = createNonEditTable(new String[]{"Processor", "UsageRate"}, 0);
+    JTable tf2 = createNonEditTable(new String[]{"Processor", "UsageRate"});
     first.add(new JScrollPane(tf2), "wrap, span");
     JProgressBar pbf1 = new JProgressBar();
     pbf1.setMinimum(0);
@@ -46,11 +46,11 @@ public class MainGUI
     tabbedPane.addTab("auto", first);
 
     JPanel second = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
-    JTable ts1 = createNonEditTable(new String[]{"Source", "Request", "GenerateTime"}, 0);
+    JTable ts1 = createNonEditTable(new String[]{"Source", "Request", "GenerateTime"});
     second.add(new JScrollPane(ts1));
-    JTable ts2 = createNonEditTable(new String[]{"Buffer", "Request", "TakeTime"}, 0);
+    JTable ts2 = createNonEditTable(new String[]{"Buffer", "Request", "TakeTime"});
     second.add(new JScrollPane(ts2), "wrap");
-    JTable ts3 = createNonEditTable(new String[]{"Processor", "Request", "TakeTime", "ReleaseTime"}, 0);
+    JTable ts3 = createNonEditTable(new String[]{"Processor", "Request", "TakeTime", "ReleaseTime"});
     second.add(new JScrollPane(ts3));
     JTextArea tps1 = new JTextArea();
     tps1.setEditable(false);
@@ -72,15 +72,8 @@ public class MainGUI
         Simulator simulator = simulators.get("steps");
         if (simulator == null)
         {
-          SimulationConfig simulationConfig = null;
-          if (debug)
-          {
-            simulationConfig = new SimulationConfig("src/main/resources/config.json");
-          }
-          else
-          {
-            simulationConfig = new SimulationConfig("config.json"); //TODO Release
-          }
+          SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
+                                                    : new SimulationConfig("config.json");
 
           clearTable(ts1);
           initTableRows(ts1, simulationConfig.getSources().size());
@@ -218,15 +211,8 @@ public class MainGUI
     });
 
     bf2.addActionListener(e -> {
-      SimulationConfig simulationConfig = null;
-      if (debug)
-      {
-        simulationConfig = new SimulationConfig("src/main/resources/config.json");
-      }
-      else
-      {
-        simulationConfig = new SimulationConfig("config.json"); //TODO Release
-      }
+      SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
+                                                : new SimulationConfig("config.json");
 
       clearTable(tf1);
       initTableRows(tf1, simulationConfig.getSources().size());
@@ -328,9 +314,9 @@ public class MainGUI
     table.setModel(model);
   }
 
-  private JTable createNonEditTable(Object[] headers, int rowCount)
+  private JTable createNonEditTable(Object[] headers)
   {
-    JTable table = new JTable(new DefaultTableModel(headers, rowCount))
+    JTable table = new JTable(new DefaultTableModel(headers, 0))
     {
       public boolean isCellEditable(int row, int column)
       {
@@ -369,6 +355,8 @@ public class MainGUI
 
   public static void main(String[] args)
   {
+    Analyzer analyzer = new Analyzer((Simulator) null);
+    analyzer.analyzeRequestCount(100);
     MainGUI mainGUI = new MainGUI();
   }
 }

@@ -1,7 +1,5 @@
 package smo_system;
 
-import java.util.ArrayList;
-
 public class Processor
 {
   private final int number;

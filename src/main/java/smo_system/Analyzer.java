@@ -1,5 +1,7 @@
 package smo_system;
 
+import configs.SimulationConfig;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -33,6 +35,9 @@ public class Analyzer
   private final ArrayList<Results> processorsResult;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
+  private final double Ta = 1.643;
+  private final double d = 0.1;
+  private final boolean debug = true;
 
   public Analyzer(Simulator simulator)
   {
@@ -91,29 +96,6 @@ public class Analyzer
     return ar;
   }
 
-  private void printResults()
-  {
-    System.out.println("--------------Analyzer--------------");
-
-    System.out.println("Sources:");
-    System.out.println("S\t|\tRC\t|\tRP\t\t|\tLT\t\t|\tBT\t\t|\tPT\t\t|\tBTD\t\t|\tPTD");
-    for (Results r : sourcesResult)
-    {
-      System.out.println(
-        r.number + "\t|\t" + r.requestCount + "\t|\t" + formatter.format(r.rejectProbability) + "\t|\t" +
-        formatter.format(r.lifeTime) + "\t|\t" + formatter.format(r.bufferTime) + "\t|\t" +
-        formatter.format(r.processTime) + "\t|\t" + formatter.format(r.bufferTimeDispersion) + "\t|\t" +
-        formatter.format(r.processTimeDispersion));
-    }
-
-    System.out.println("Processors:");
-    System.out.println("P\t|\tUR");
-    for (Results r : processorsResult)
-    {
-      System.out.println(r.number + "\t|\t" + formatter.format(r.usageRate));
-    }
-  }
-
   private void analyzeSources()
   {
     ProductionManager pm = simulator.getProductionManager();
@@ -153,5 +135,47 @@ public class Analyzer
       r.usageRate = p.getWorkTime() / endTime;
       processorsResult.add(r);
     }
+  }
+
+  public int analyzeRequestCount(int N0)
+  {
+    SimulationConfig config = debug ? new SimulationConfig("src/main/resources/config.json")
+                                    : new SimulationConfig("config.json");
+    double lastP = -1;
+    while (true)
+    {
+      if (lastP == -1)
+      {
+        Simulator s0 = new Simulator(config.getSources(), config.getBuffer(), config.getProcessors(), N0);
+        s0.startSimulation(false);
+
+        lastP = (double) s0.getProductionManager().getFullRejectCount() / (double) N0;
+        if (lastP == 0 || lastP == 1)
+        {
+          return -1;
+        }
+      }
+      int N1 = (int) Math.round(Ta * (1 - lastP) / (lastP * d * d));
+
+      Simulator s1 = new Simulator(config.getSources(), config.getBuffer(), config.getProcessors(), N1);
+      s1.startSimulation(false);
+
+      double p1 = (double) s1.getProductionManager().getFullRejectCount() / (double) N1;
+      if (p1 == 0 || p1 == 1)
+      {
+        return -2;
+      }
+
+      System.out.println(
+        "N0=" + N0 + " p0=" + lastP + " N1=" + N1 + " p1=" + p1 + "  [abs=" + Math.abs(lastP - p1) + ", dp0=" +
+        (0.1 * lastP) + "]");
+      if (Math.abs(lastP - p1) < 0.1 * lastP)
+      {
+        break;
+      }
+      N0 = N1;
+      lastP = p1;
+    }
+    return N0;
   }
 }
