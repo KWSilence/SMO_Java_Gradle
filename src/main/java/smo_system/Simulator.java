@@ -87,7 +87,10 @@ public class Simulator extends Thread
     {
       if (steps)
       {
-        wait();
+        synchronized (this)
+        {
+          wait();
+        }
       }
       while (!interrupted())
       {
@@ -108,8 +111,11 @@ public class Simulator extends Thread
                            "/" + productionManager.getMaxRequestCount() + "]\n");
           if (steps)
           {
-            notify();
-            wait();
+            synchronized (this)
+            {
+              notify();
+              wait();
+            }
           }
           boolean successPutToBuffer = productionManager.putToBuffer();
           boolean successTake = selectionManager.putToProcessor();
@@ -148,8 +154,11 @@ public class Simulator extends Thread
 
           if (steps)
           {
-            notify();
-            wait();
+            synchronized (this)
+            {
+              notify();
+              wait();
+            }
           }
 
         }
@@ -170,8 +179,11 @@ public class Simulator extends Thread
               request.getNumber() + " in " + formatter.format(processor.getProcessTime()) + "\n");
             if (steps)
             {
-              notify();
-              wait();
+              synchronized (this)
+              {
+                notify();
+                wait();
+              }
             }
           }
           else
@@ -181,13 +193,19 @@ public class Simulator extends Thread
             lastEvent.setLog("Simulation complete. You can create Result Table.\n");
             if (steps)
             {
-              notify();
-              wait();
+              synchronized (this)
+              {
+                notify();
+                wait();
+              }
             }
             lastEvent.setType(SimulatorEvent.EventType.ANALYZE);
             if (steps)
             {
-              notify();
+              synchronized (this)
+              {
+                notify();
+              }
             }
             return;
           }
@@ -208,8 +226,11 @@ public class Simulator extends Thread
                            buffer.getTakeIndex() + ")\n");
           if (steps)
           {
-            notify();
-            wait();
+            synchronized (this)
+            {
+              notify();
+              wait();
+            }
           }
         }
       }
