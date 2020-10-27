@@ -11,14 +11,14 @@ public class SelectionManager
   private Processor freeProcessor;
   private Request lastRequest;
 
-  public SelectionManager(ArrayList<Processor> processors, Buffer buffer)
+  public SelectionManager(ArrayList<Processor> processors, Buffer buffer, int sourceCount)
   {
     this.processors = processors;
     this.takeProcessor = null;
     this.freeProcessor = null;
     this.buffer = buffer;
     this.successRequests = new ArrayList<>();
-    for (int i = 0; i < processors.size(); i++)
+    for (int i = 0; i < sourceCount; i++)
     {
       successRequests.add(new ArrayList<>());
     }

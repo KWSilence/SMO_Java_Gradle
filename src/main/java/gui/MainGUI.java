@@ -14,11 +14,11 @@ import java.util.HashMap;
 public class MainGUI
 {
   private final NumberFormat formatter = new DecimalFormat("#0.000");
-  private final boolean debug = true;
   private Thread lineMover = null;
   private final HashMap<String, Simulator> simulators = new HashMap<>();
+  private boolean skipState = false;
 
-  MainGUI()
+  MainGUI(boolean debug)
   {
     simulators.put("steps", null);
     simulators.put("auto", null);
@@ -40,9 +40,15 @@ public class MainGUI
     first.add(pbf1);
     JButton bf1 = new JButton("Stop");
     bf1.setEnabled(false);
-    first.add(bf1, "split 2");
+    first.add(bf1, "split 4");
     JButton bf2 = new JButton("Start Auto");
     first.add(bf2);
+    JCheckBox cbf1 = new JCheckBox("Use N0");
+    first.add(cbf1);
+    JTextField tff1 = new JTextField("100");
+    tff1.setEnabled(false);
+    first.add(tff1);
+    cbf1.addActionListener(e -> tff1.setEnabled(cbf1.isSelected()));
     tabbedPane.addTab("auto", first);
 
     JPanel second = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
@@ -60,11 +66,13 @@ public class MainGUI
     second.add(pbs1);
     JButton bs1 = new JButton("Stop");
     bs1.setEnabled(false);
-    second.add(bs1, "split 2");
+    second.add(bs1, "split 3");
     JButton bs2 = new JButton("Start Steps");
     second.add(bs2);
+    JButton bs3 = new JButton("Skip");
+    second.add(bs3);
+    bs3.setEnabled(false);
     tabbedPane.addTab("step", second);
-
 
     bs2.addActionListener(e -> {
       try
@@ -94,6 +102,7 @@ public class MainGUI
 
           bs2.setText("Next Step");
           bs1.setEnabled(true);
+          bs3.setEnabled(true);
         }
         else
         {
@@ -158,6 +167,12 @@ public class MainGUI
             case WORK_END -> {
               tps1.append(event.getLog());
               bs2.setText("Show Result Table");
+              if (skipState)
+              {
+                bs3.setEnabled(false);
+                skipState = false;
+                return;
+              }
             }
 
             case ANALYZE -> {
@@ -194,6 +209,11 @@ public class MainGUI
             }
           }
           pbs1.setValue(simulator.getProgress());
+
+          if (skipState)
+          {
+            bs2.getActionListeners()[0].actionPerformed(e);
+          }
         }
       }
       catch (Exception ex)
@@ -208,6 +228,13 @@ public class MainGUI
       bs2.setText("Start Steps");
       bs2.setEnabled(true);
       bs1.setEnabled(false);
+      bs3.setEnabled(false);
+    });
+
+    bs3.addActionListener(e -> {
+      bs3.setEnabled(false);
+      skipState = true;
+      bs2.getActionListeners()[0].actionPerformed(e);
     });
 
     bf2.addActionListener(e -> {
@@ -219,32 +246,63 @@ public class MainGUI
       clearTable(tf2);
       initTableRows(tf2, simulationConfig.getProcessors().size());
 
-      pbf1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
-      pbf1.setValue(0);
+      final int N0;
 
-      simulators.put("auto", new Simulator(simulationConfig));
-      Simulator simulator = simulators.get("auto");
-      simulator.setUseSteps(false);
+      if (cbf1.isSelected())
+      {
+        N0 = Integer.parseInt(tff1.getText());
+        pbf1.setMaximum(N0);
+      }
+      else
+      {
+        N0 = 0;
+        simulators.put("auto", new Simulator(simulationConfig));
+        Simulator simulator = simulators.get("auto");
+        simulator.setUseSteps(false);
+        pbf1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
+      }
+
+      pbf1.setValue(0);
 
       bf2.setEnabled(false);
       bf1.setEnabled(true);
 
       lineMover = new Thread(() -> {
-        Simulator s = simulators.get("auto");
-        s.start();
-        while (true)
+        if (cbf1.isSelected())
         {
-          if (s.isInterrupted())
+          Analyzer.RequestCountAnalyzer analyzer = new Analyzer.RequestCountAnalyzer(N0, debug);
+          try
           {
+            analyzer.start();
+            analyzer.join();
+          }
+          catch (Exception exception)
+          {
+            analyzer.interrupt();
             return;
           }
-          if (!s.isAlive())
-          {
-            break;
-          }
-          pbf1.setValue(s.getProgress());
+          pbf1.setValue(pbf1.getMaximum());
+          simulators.put("auto", analyzer.getLastSimulator());
         }
-        Analyzer analyzer = new Analyzer(s);
+        else
+        {
+          Simulator simulator = simulators.get("auto");
+          simulator.start();
+          while (true)
+          {
+            if (simulator.isInterrupted())
+            {
+              return;
+            }
+            if (!simulator.isAlive())
+            {
+              break;
+            }
+            pbf1.setValue(simulator.getProgress());
+          }
+        }
+
+        Analyzer analyzer = new Analyzer(simulators.get("auto"));
         analyzer.analyze(true);
         ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
         ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
@@ -280,9 +338,13 @@ public class MainGUI
     });
 
     bf1.addActionListener(e -> {
-      simulators.get("auto").interrupt();
       lineMover.interrupt();
-      simulators.put("auto", null);
+      Simulator simulator = simulators.get("auto");
+      if (simulator != null)
+      {
+        simulator.interrupt();
+        simulators.put("auto", null);
+      }
       bf2.setEnabled(true);
       bf1.setEnabled(false);
     });
@@ -355,8 +417,6 @@ public class MainGUI
 
   public static void main(String[] args)
   {
-    Analyzer analyzer = new Analyzer((Simulator) null);
-    analyzer.analyzeRequestCount(100);
-    MainGUI mainGUI = new MainGUI();
+    new MainGUI(true);
   }
 }

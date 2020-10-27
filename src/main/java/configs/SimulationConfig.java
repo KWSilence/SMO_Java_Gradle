@@ -24,16 +24,17 @@ public class SimulationConfig
     }
   }
 
-  private final ArrayList<Source> sources;
-  private final ArrayList<Processor> processors;
-  private final Buffer buffer;
-  private final ProductionManager productionManager;
-  private final SelectionManager selectionManager;
+  private ArrayList<Source> sources;
+  private ArrayList<Processor> processors;
+  private Buffer buffer;
+  private ProductionManager productionManager;
+  private SelectionManager selectionManager;
+  private ConfigJSON config;
 
   public SimulationConfig(String fileName)
   {
     Gson gson = new Gson();
-    ConfigJSON config = new ConfigJSON();
+    config = new ConfigJSON();
     try
     {
       config = gson.fromJson(new FileReader(fileName), ConfigJSON.class);
@@ -42,7 +43,21 @@ public class SimulationConfig
     {
       e.printStackTrace();
     }
+    parseConfig(config);
+  }
 
+  public SimulationConfig(ConfigJSON config)
+  {
+    parseConfig(config);
+  }
+
+  public ConfigJSON getConfig()
+  {
+    return config;
+  }
+
+  private void parseConfig(ConfigJSON config)
+  {
     this.sources = new ArrayList<>();
     for (int i = 0; i < config.sources.size(); i++)
     {
@@ -55,7 +70,7 @@ public class SimulationConfig
       this.processors.add(new Processor(i, config.processors.get(i)));
     }
     this.productionManager = new ProductionManager(sources, buffer, config.requestsCount);
-    this.selectionManager = new SelectionManager(processors, buffer);
+    this.selectionManager = new SelectionManager(processors, buffer, sources.size());
   }
 
   public ArrayList<Source> getSources()

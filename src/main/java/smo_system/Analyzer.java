@@ -35,9 +35,6 @@ public class Analyzer
   private final ArrayList<Results> processorsResult;
 
   private final NumberFormat formatter = new DecimalFormat("#0.000");
-  private final double Ta = 1.643;
-  private final double d = 0.1;
-  private final boolean debug = true;
 
   public Analyzer(Simulator simulator)
   {
@@ -137,45 +134,77 @@ public class Analyzer
     }
   }
 
-  public int analyzeRequestCount(int N0)
+  public static class RequestCountAnalyzer extends Thread
   {
-    SimulationConfig config = debug ? new SimulationConfig("src/main/resources/config.json")
-                                    : new SimulationConfig("config.json");
-    double lastP = -1;
-    while (true)
+    private final boolean debug;
+    private int N0;
+    private Simulator lastSimulator = null;
+
+
+    public RequestCountAnalyzer(int N0, boolean debug)
     {
-      if (lastP == -1)
-      {
-        Simulator s0 = new Simulator(config.getSources(), config.getBuffer(), config.getProcessors(), N0);
-        s0.startSimulation(false);
-
-        lastP = (double) s0.getProductionManager().getFullRejectCount() / (double) N0;
-        if (lastP == 0 || lastP == 1)
-        {
-          return -1;
-        }
-      }
-      int N1 = (int) Math.round(Ta * (1 - lastP) / (lastP * d * d));
-
-      Simulator s1 = new Simulator(config.getSources(), config.getBuffer(), config.getProcessors(), N1);
-      s1.startSimulation(false);
-
-      double p1 = (double) s1.getProductionManager().getFullRejectCount() / (double) N1;
-      if (p1 == 0 || p1 == 1)
-      {
-        return -2;
-      }
-
-      System.out.println(
-        "N0=" + N0 + " p0=" + lastP + " N1=" + N1 + " p1=" + p1 + "  [abs=" + Math.abs(lastP - p1) + ", dp0=" +
-        (0.1 * lastP) + "]");
-      if (Math.abs(lastP - p1) < 0.1 * lastP)
-      {
-        break;
-      }
-      N0 = N1;
-      lastP = p1;
+      this.N0 = N0;
+      this.debug = debug;
     }
-    return N0;
+
+    public Simulator getLastSimulator()
+    {
+      return lastSimulator;
+    }
+
+    @Override
+    public void run()
+    {
+      SimulationConfig config = debug ? new SimulationConfig("src/main/resources/config.json")
+                                      : new SimulationConfig("config.json");
+      final double Ta = 1.643;
+      final double d = 0.1;
+      double lastP = -1;
+      int lastN = 0;
+      while (!interrupted())
+      {
+        if (lastP > 0)
+        {
+          N0 = (int) Math.round(Ta * (1 - lastP) / (lastP * d * d));
+        }
+
+        SimulationConfig tmpConfig = new SimulationConfig(config.getConfig());
+        Simulator s1 = new Simulator(tmpConfig.getSources(), tmpConfig.getBuffer(), tmpConfig.getProcessors(), N0);
+
+        try
+        {
+          s1.start();
+          s1.join();
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+          s1.interrupt();
+          break;
+        }
+
+        double p1 = (double) s1.getProductionManager().getFullRejectCount() / (double) N0;
+        if (p1 == 0 || p1 == 1)
+        {
+          lastSimulator = null;
+          break;
+        }
+
+        if (debug)
+        {
+          System.out.println(
+            "N0=" + lastN + " p0=" + lastP + " N1=" + N0 + " p1=" + p1 + "  [abs=" + Math.abs(lastP - p1) + ", dp0=" +
+            (0.1 * lastP) + "]");
+        }
+
+        if (Math.abs(lastP - p1) < 0.1 * lastP)
+        {
+          break;
+        }
+        lastSimulator = s1;
+        lastP = p1;
+        lastN = N0;
+      }
+    }
   }
 }

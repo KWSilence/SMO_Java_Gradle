@@ -10,8 +10,8 @@ import java.util.ArrayList;
 public class Simulator extends Thread
 {
   private final Buffer buffer;
-  private double endTime;
-  private boolean useSteps;
+  private double endTime = 0;
+  private boolean useSteps = false;
   private final SimulatorEvent lastEvent;
 
   private final ProductionManager productionManager;
@@ -26,8 +26,6 @@ public class Simulator extends Thread
     this.buffer = config.getBuffer();
     this.productionManager = config.getProductionManager();
     this.selectionManager = config.getSelectionManager();
-    this.endTime = 0;
-    this.useSteps = false;
     this.lastEvent = new SimulatorEvent();
   }
 
@@ -36,8 +34,6 @@ public class Simulator extends Thread
     this.buffer = config.getBuffer();
     this.productionManager = config.getProductionManager();
     this.selectionManager = config.getSelectionManager();
-    this.endTime = 0;
-    this.useSteps = false;
     this.lastEvent = new SimulatorEvent();
   }
 
@@ -45,9 +41,7 @@ public class Simulator extends Thread
   {
     this.buffer = buffer;
     this.productionManager = new ProductionManager(sources, buffer, requestsCount);
-    this.selectionManager = new SelectionManager(processors, buffer);
-    this.endTime = 0;
-    this.useSteps = false;
+    this.selectionManager = new SelectionManager(processors, buffer, sources.size());
     this.lastEvent = new SimulatorEvent();
   }
 
@@ -87,7 +81,7 @@ public class Simulator extends Thread
     startSimulation(useSteps);
   }
 
-  public synchronized void startSimulation(boolean steps)
+  public void startSimulation(boolean steps)
   {
     try
     {
@@ -95,12 +89,8 @@ public class Simulator extends Thread
       {
         wait();
       }
-      while (true)
+      while (!interrupted())
       {
-        if (isInterrupted())
-        {
-          return;
-        }
         productionManager.selectNearestEvent();
         selectionManager.selectNearestFreeEvent();
         if (productionManager.canGenerate() &&

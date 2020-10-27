@@ -3,7 +3,6 @@ package gui;
 import smo_system.Buffer;
 import smo_system.Processor;
 import smo_system.Request;
-import smo_system.Source;
 
 public class SimulatorEvent
 {
@@ -17,15 +16,6 @@ public class SimulatorEvent
   private Processor processor;
   private Buffer buffer;
   private String log;
-
-  public SimulatorEvent(EventType type, Request request, Processor processor, Buffer buffer)
-  {
-    this.type = type;
-    this.request = request;
-    this.processor = processor;
-    this.buffer = buffer;
-    this.log = "";
-  }
 
   public SimulatorEvent()
   {
