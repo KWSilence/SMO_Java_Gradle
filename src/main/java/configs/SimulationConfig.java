@@ -8,12 +8,12 @@ import java.util.ArrayList;
 
 public class SimulationConfig
 {
-  private class ConfigJSON
+  public static class ConfigJSON
   {
-    public ArrayList<Double> sources;
-    public int bufferCapacity;
-    public ArrayList<Double> processors;
-    public int requestsCount;
+    private final int requestsCount;
+    private final int bufferCapacity;
+    private final ArrayList<Double> sources;
+    private final ArrayList<Double> processors;
 
     ConfigJSON()
     {
@@ -21,6 +21,34 @@ public class SimulationConfig
       bufferCapacity = 0;
       processors = null;
       requestsCount = 0;
+    }
+
+    public ConfigJSON(ArrayList<Double> sources, ArrayList<Double> processors, int bufferCapacity, int requestsCount)
+    {
+      this.sources = sources;
+      this.bufferCapacity = bufferCapacity;
+      this.processors = processors;
+      this.requestsCount = requestsCount;
+    }
+
+    public ArrayList<Double> getSources()
+    {
+      return sources;
+    }
+
+    public ArrayList<Double> getProcessors()
+    {
+      return processors;
+    }
+
+    public int getBufferCapacity()
+    {
+      return bufferCapacity;
+    }
+
+    public int getRequestsCount()
+    {
+      return requestsCount;
     }
   }
 
@@ -33,16 +61,7 @@ public class SimulationConfig
 
   public SimulationConfig(String fileName)
   {
-    Gson gson = new Gson();
-    config = new ConfigJSON();
-    try
-    {
-      config = gson.fromJson(new FileReader(fileName), ConfigJSON.class);
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    this.config = readJSON(fileName);
     parseConfig(config);
   }
 
@@ -54,6 +73,20 @@ public class SimulationConfig
   public ConfigJSON getConfig()
   {
     return config;
+  }
+
+  public static ConfigJSON readJSON(String fileName)
+  {
+    Gson gson = new Gson();
+    try
+    {
+      return gson.fromJson(new FileReader(fileName), ConfigJSON.class);
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   private void parseConfig(ConfigJSON config)

@@ -27,4 +27,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.miglayout/miglayout
     compile group: 'com.miglayout', name: 'miglayout', version: '3.7.4'
+
+    // https://mvnrepository.com/artifact/org.jfree/jfreechart
+    compile group: 'org.jfree', name: 'jfreechart', version: '1.5.0'
 }
