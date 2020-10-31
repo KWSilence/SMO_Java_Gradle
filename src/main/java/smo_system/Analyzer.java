@@ -106,9 +106,7 @@ public class Analyzer
       r.number = s.getNumber();
       r.requestCount = s.getRequestCount();
       r.rejectProbability = ((double) rejected.get(r.number).size()) / ((double) r.requestCount);
-      r.lifeTime =
-        success.get(r.number).stream().mapToDouble(a -> (a.getTimeInProcessor() + a.getTimeInBuffer())).sum() /
-        r.requestCount;
+      r.lifeTime = success.get(r.number).stream().mapToDouble(Request::getLifeTime).sum() / r.requestCount;
       r.bufferTime = success.get(r.number).stream().mapToDouble(Request::getTimeInBuffer).sum() / r.requestCount;
       r.processTime = success.get(r.number).stream().mapToDouble(Request::getTimeInProcessor).sum() / r.requestCount;
       r.bufferTimeDispersion = success.get(r.number).stream().mapToDouble(

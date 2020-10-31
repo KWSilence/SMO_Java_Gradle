@@ -86,7 +86,7 @@ public class SimulationConfig
     {
       e.printStackTrace();
     }
-    return null;
+    return new ConfigJSON();
   }
 
   private void parseConfig(ConfigJSON config)

@@ -7,6 +7,8 @@ import smo_system.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -20,6 +22,7 @@ public class MainGUI
 {
   private final NumberFormat formatter = new DecimalFormat("#0.000");
   private Thread lineMover = null;
+  private Runnable task = null;
   private final HashMap<String, Simulator> simulators = new HashMap<>();
   private boolean skipState = false;
 
@@ -33,7 +36,7 @@ public class MainGUI
 
     JTabbedPane tabbedPane = new JTabbedPane();
 
-    JPanel first = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
+    JPanel first = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"));
     JTable tf1 = createTable(
       new String[]{"Source", "RequestsGen", "RejectProb", "StayTime", "WaitingTime", "ProcTime", "DisWaitingTime",
                    "DisProcTime"}, null);
@@ -167,7 +170,7 @@ public class MainGUI
     tabbedPane.addTab("auto", first);
 
 
-    JPanel second = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
+    JPanel second = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"));
     JTable ts1 = createTable(new String[]{"Source", "Request", "GenerateTime"}, null);
     second.add(new JScrollPane(ts1));
     JTable ts2 = createTable(new String[]{"Buffer", "Request", "TakeTime"}, null);
@@ -176,163 +179,200 @@ public class MainGUI
     second.add(new JScrollPane(ts3));
     JTextArea tps1 = new JTextArea();
     tps1.setEditable(false);
-    second.add(new JScrollPane(tps1), "wrap");
+    JScrollPane sps1 = new JScrollPane(tps1);
+    second.add(sps1, "wrap");
     JProgressBar pbs1 = new JProgressBar();
     pbs1.setMinimum(0);
     second.add(pbs1);
     JButton bs1 = new JButton("Stop");
     bs1.setEnabled(false);
-    second.add(bs1, "split 3");
+    second.add(bs1, "split 4");
     JButton bs2 = new JButton("Start Steps");
     second.add(bs2);
     JButton bs3 = new JButton("Skip");
     second.add(bs3);
+    JCheckBox cbs1 = new JCheckBox("textAutoScroll");
+    second.add(cbs1);
+    sps1.getVerticalScrollBar().addAdjustmentListener(e -> e.getAdjustable().setValue(
+      cbs1.isSelected() ? e.getAdjustable().getMaximum() : e.getAdjustable().getValue()));
     bs3.setEnabled(false);
     bs2.addActionListener(e -> {
-      try
+      Simulator simulator = simulators.get("steps");
+      if (simulator == null)
       {
-        Simulator simulator = simulators.get("steps");
-        if (simulator == null)
+        SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
+                                                  : new SimulationConfig("config.json");
+
+        clearTable(ts1);
+        initTableRows(ts1, simulationConfig.getSources().size());
+        clearTable(ts2);
+        initTableRows(ts2, simulationConfig.getBuffer().getCapacity());
+        clearTable(ts3);
+        initTableRows(ts3, simulationConfig.getProcessors().size());
+
+        tps1.setText("");
+
+        pbs1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
+        pbs1.setValue(0);
+
+        simulators.put("steps", new Simulator(simulationConfig));
+        simulator = simulators.get("steps");
+        simulator.setUseSteps(true);
+        simulator.start();
+
+        bs2.setText("Next Step");
+        bs1.setEnabled(true);
+        bs3.setEnabled(true);
+
+        Simulator finalSimulator = simulator;
+        task = () -> {
+          try
+          {
+            do
+            {
+              if (finalSimulator.isInterrupted())
+              {
+                System.out.println("ok");
+                return;
+              }
+              synchronized (finalSimulator)
+              {
+                finalSimulator.notify();
+                finalSimulator.wait();
+              }
+              SimulatorEvent event = finalSimulator.getLastEvent();
+              switch (event.getType())
+              {
+                case GENERATE -> {
+                  Request request = event.getRequest();
+                  if (!skipState)
+                  {
+                    ts1.setValueAt(request.getSourceNumber() + "." + request.getNumber(), request.getSourceNumber(), 1);
+                    ts1.setValueAt(formatter.format(request.getTime()), request.getSourceNumber(), 2);
+                  }
+                  tps1.append(event.getLog());
+                }
+
+                case TAKE -> {
+                  Request request = event.getRequest();
+                  Processor processor = event.getProcessor();
+                  Buffer buffer = event.getBuffer();
+                  if (!skipState)
+                  {
+                    if (buffer != null)
+                    {
+                      clearRowWithMove(ts2, event.getBuffer().getTakeIndex());
+                    }
+                    else
+                    {
+                      ts1.setValueAt(null, request.getSourceNumber(), 1);
+                      ts1.setValueAt(null, request.getSourceNumber(), 2);
+                    }
+                    ts3.setValueAt(request.getSourceNumber() + "." + request.getNumber(), processor.getNumber(), 1);
+                    ts3.setValueAt(formatter.format(request.getTime() + request.getTimeInBuffer()), processor.getNumber(),
+                                   2);
+                    ts3.setValueAt(null, processor.getNumber(), 3);
+                  }
+                  tps1.append(event.getLog());
+                }
+
+                case BUFFER -> {
+                  Request request = event.getRequest();
+                  Buffer buffer = event.getBuffer();
+                  int row = buffer.getSize() - 1;
+                  if (!skipState)
+                  {
+                    ts1.setValueAt(null, request.getSourceNumber(), 1);
+                    ts1.setValueAt(null, request.getSourceNumber(), 2);
+                    ts2.setValueAt(request.getSourceNumber() + "." + request.getNumber(), row, 1);
+                    ts2.setValueAt(formatter.format(request.getTime()), row, 2);
+                  }
+                  tps1.append(event.getLog());
+                }
+
+                case REJECT -> {
+                  Request request = event.getRequest();
+                  if (!skipState)
+                  {
+                    ts1.setValueAt(null, request.getSourceNumber(), 1);
+                    ts1.setValueAt(null, request.getSourceNumber(), 2);
+                  }
+                  tps1.append(event.getLog());
+                }
+
+                case RELEASE -> {
+                  Processor processor = event.getProcessor();
+                  if (!skipState)
+                  {
+                    ts3.setValueAt(formatter.format(processor.getProcessTime()), processor.getNumber(), 3);
+                  }
+                  tps1.append(event.getLog());
+                }
+
+                case WORK_END -> {
+                  tps1.append(event.getLog());
+                  bs2.setText("Show Result Table");
+                  bs2.setEnabled(true);
+                  if (skipState)
+                  {
+                    bs3.setEnabled(false);
+                    skipState = false;
+                    return;
+                  }
+                }
+
+                case ANALYZE -> {
+                  Analyzer analyzer = new Analyzer(finalSimulator);
+                  analyzer.analyze(true);
+                  tps1.append("Simulation was analyzed.");
+                  ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
+                  ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
+                  clearTable(tf1);
+                  initTableRows(tf1, sr.size());
+                  clearTable(tf2);
+                  initTableRows(tf2, pr.size());
+
+                  for (int i = 0; i < sr.size(); i++)
+                  {
+                    ArrayList<String> el = sr.get(i);
+                    for (int j = 1; j < el.size(); j++)
+                    {
+                      tf1.setValueAt(el.get(j), i, j);
+                    }
+                  }
+
+                  for (int i = 0; i < pr.size(); i++)
+                  {
+                    ArrayList<String> el = pr.get(i);
+                    for (int j = 1; j < el.size(); j++)
+                    {
+                      tf2.setValueAt(el.get(j), i, j);
+                    }
+                  }
+
+                  tabbedPane.setSelectedIndex(0);
+                  bs2.setEnabled(false);
+                }
+              }
+              pbs1.setValue(finalSimulator.getProgress());
+            } while (skipState);
+          }
+          catch (Exception ex)
+          {
+            ex.printStackTrace();
+          }
+        };
+      }
+      else
+      {
+        if (skipState)
         {
-          SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
-                                                    : new SimulationConfig("config.json");
-
-          clearTable(ts1);
-          initTableRows(ts1, simulationConfig.getSources().size());
-          clearTable(ts2);
-          initTableRows(ts2, simulationConfig.getBuffer().getCapacity());
-          clearTable(ts3);
-          initTableRows(ts3, simulationConfig.getProcessors().size());
-
-          tps1.setText("");
-
-          pbs1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
-          pbs1.setValue(0);
-
-          simulators.put("steps", new Simulator(simulationConfig));
-          simulator = simulators.get("steps");
-          simulator.setUseSteps(true);
-          simulator.start();
-
-          bs2.setText("Next Step");
-          bs1.setEnabled(true);
-          bs3.setEnabled(true);
+          new Thread(task).start();
         }
         else
         {
-          synchronized (simulator)
-          {
-            simulator.notify();
-            simulator.wait();
-          }
-          SimulatorEvent event = simulator.getLastEvent();
-          switch (event.getType())
-          {
-            case GENERATE -> {
-              Request request = event.getRequest();
-              ts1.setValueAt(request.getSourceNumber() + "." + request.getNumber(), request.getSourceNumber(), 1);
-              ts1.setValueAt(formatter.format(request.getTime()), request.getSourceNumber(), 2);
-              tps1.append(event.getLog());
-            }
-
-            case TAKE -> {
-              Request request = event.getRequest();
-              Processor processor = event.getProcessor();
-              Buffer buffer = event.getBuffer();
-              if (buffer != null)
-              {
-                clearRowWithMove(ts2, event.getBuffer().getTakeIndex());
-              }
-              else
-              {
-                ts1.setValueAt(null, request.getSourceNumber(), 1);
-                ts1.setValueAt(null, request.getSourceNumber(), 2);
-              }
-              ts3.setValueAt(request.getSourceNumber() + "." + request.getNumber(), processor.getNumber(), 1);
-              ts3.setValueAt(formatter.format(request.getTime() + request.getTimeInBuffer()), processor.getNumber(), 2);
-              ts3.setValueAt(null, processor.getNumber(), 3);
-              tps1.append(event.getLog());
-            }
-
-            case BUFFER -> {
-              Request request = event.getRequest();
-              Buffer buffer = event.getBuffer();
-              int row = buffer.getSize() - 1;
-              ts1.setValueAt(null, request.getSourceNumber(), 1);
-              ts1.setValueAt(null, request.getSourceNumber(), 2);
-              ts2.setValueAt(request.getSourceNumber() + "." + request.getNumber(), row, 1);
-              ts2.setValueAt(formatter.format(request.getTime()), row, 2);
-              tps1.append(event.getLog());
-            }
-
-            case REJECT -> {
-              Request request = event.getRequest();
-              tps1.append(event.getLog());
-              ts1.setValueAt(null, request.getSourceNumber(), 1);
-              ts1.setValueAt(null, request.getSourceNumber(), 2);
-            }
-
-            case RELEASE -> {
-              Processor processor = event.getProcessor();
-              ts3.setValueAt(formatter.format(processor.getProcessTime()), processor.getNumber(), 3);
-              tps1.append(event.getLog());
-            }
-
-            case WORK_END -> {
-              tps1.append(event.getLog());
-              bs2.setText("Show Result Table");
-              if (skipState)
-              {
-                bs3.setEnabled(false);
-                skipState = false;
-                return;
-              }
-            }
-
-            case ANALYZE -> {
-              Analyzer analyzer = new Analyzer(simulator);
-              analyzer.analyze(true);
-              tps1.append("Simulation was analyzed.");
-              ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
-              ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
-              clearTable(tf1);
-              initTableRows(tf1, sr.size());
-              clearTable(tf2);
-              initTableRows(tf2, pr.size());
-
-              for (int i = 0; i < sr.size(); i++)
-              {
-                ArrayList<String> el = sr.get(i);
-                for (int j = 1; j < el.size(); j++)
-                {
-                  tf1.setValueAt(el.get(j), i, j);
-                }
-              }
-
-              for (int i = 0; i < pr.size(); i++)
-              {
-                ArrayList<String> el = pr.get(i);
-                for (int j = 1; j < el.size(); j++)
-                {
-                  tf2.setValueAt(el.get(j), i, j);
-                }
-              }
-
-              tabbedPane.setSelectedIndex(0);
-              bs2.setEnabled(false);
-            }
-          }
-          pbs1.setValue(simulator.getProgress());
-
-          if (skipState)
-          {
-            bs2.getActionListeners()[0].actionPerformed(e);
-          }
+          task.run();
         }
-      }
-      catch (Exception ex)
-      {
-        ex.printStackTrace();
       }
     });
     bs1.addActionListener(e -> {
@@ -342,16 +382,18 @@ public class MainGUI
       bs2.setEnabled(true);
       bs1.setEnabled(false);
       bs3.setEnabled(false);
+      skipState = false;
     });
     bs3.addActionListener(e -> {
       bs3.setEnabled(false);
       skipState = true;
       bs2.getActionListeners()[0].actionPerformed(e);
+      bs2.setEnabled(false);
     });
     tabbedPane.addTab("step", second);
 
-      //TODO 4 step
-//    JPanel third = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
+    //TODO 4 step
+    JPanel third = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
 //    XYSeries series = new XYSeries("sin(a)");
 //    for(float i = 0; i <= Math.PI; i+=0.01){
 //      series.add(i, Math.sin(i));
@@ -364,10 +406,11 @@ public class MainGUI
 //                         true, true, true);
 //    third.add(new ChartPanel(chart), "wrap");
 //    third.add(new JButton("Ok"));
-//    tabbedPane.addTab("test", third);
+    tabbedPane.addTab("analyze", third);
 
 
-    JPanel fourth = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
+    JPanel fourth = new JPanel(
+      new MigLayout("", "[grow,fill]", "[grow,fill][]"));
     SimulationConfig.ConfigJSON config = SimulationConfig
       .readJSON(debug ? "src/main/resources/config.json" : "config.json");
     JTable tfh1 = createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
@@ -418,7 +461,8 @@ public class MainGUI
       ArrayList<Double> processors = getTableLambdas(tfh2);
       int bufferCapacity = Integer.parseInt(tffh3.getText());
       int requestsCount = Integer.parseInt(tffh4.getText());
-      SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(sources, processors, bufferCapacity, requestsCount);
+      SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(sources, processors, bufferCapacity,
+                                                                               requestsCount);
       String fileName = debug ? "src/main/resources/config.json" : "config.json";
       try
       {
@@ -518,7 +562,7 @@ public class MainGUI
     {
       for (int i = table.getRowCount() - 1; i >= size; i--)
       {
-        ((DefaultTableModel)table.getModel()).removeRow(i);
+        ((DefaultTableModel) table.getModel()).removeRow(i);
       }
     }
   }

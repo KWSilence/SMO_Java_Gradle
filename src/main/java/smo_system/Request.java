@@ -14,8 +14,8 @@ public class Request
     this.number = number;
     this.sourceNumber = sourceNumber;
     this.creationTime = creationTime;
-    this.timeInBuffer=0;
-    this.timeInProcessor=0;
+    this.timeInBuffer = 0;
+    this.timeInProcessor = 0;
   }
 
   public int getNumber()
@@ -51,5 +51,10 @@ public class Request
   public double getTimeInProcessor()
   {
     return timeInProcessor;
+  }
+
+  public double getLifeTime()
+  {
+    return timeInBuffer + timeInProcessor;
   }
 }
