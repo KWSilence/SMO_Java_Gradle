@@ -3,31 +3,54 @@ package gui;
 import com.google.gson.Gson;
 import configs.SimulationConfig;
 import net.miginfocom.swing.MigLayout;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import smo_system.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MainGUI
 {
   private final NumberFormat formatter = new DecimalFormat("#0.000");
   private Thread lineMover = null;
   private Runnable task = null;
+  private ArrayList<Simulator> simToAnalyze = new ArrayList<>();
   private final HashMap<String, Simulator> simulators = new HashMap<>();
   private boolean skipState = false;
+  private final int threadPass = 5;
 
   MainGUI(boolean debug)
   {
+    File configFile = new File(debug ? "src/main/resources/config.json" : "config.json");
+    if (!configFile.exists())
+    {
+      try
+      {
+        PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
+        Gson gson = new Gson();
+        writer.print(gson.toJson(new SimulationConfig.ConfigJSON(new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0)),
+                                                                 new ArrayList<>(Arrays.asList(1.0, 1.0)), 3, 1000)));
+        writer.close();
+      }
+      catch (IOException e)
+      {
+        e.printStackTrace();
+      }
+    }
+
     simulators.put("steps", null);
     simulators.put("auto", null);
 
@@ -232,7 +255,6 @@ public class MainGUI
             {
               if (finalSimulator.isInterrupted())
               {
-                System.out.println("ok");
                 return;
               }
               synchronized (finalSimulator)
@@ -269,8 +291,8 @@ public class MainGUI
                       ts1.setValueAt(null, request.getSourceNumber(), 2);
                     }
                     ts3.setValueAt(request.getSourceNumber() + "." + request.getNumber(), processor.getNumber(), 1);
-                    ts3.setValueAt(formatter.format(request.getTime() + request.getTimeInBuffer()), processor.getNumber(),
-                                   2);
+                    ts3.setValueAt(formatter.format(request.getTime() + request.getTimeInBuffer()),
+                                   processor.getNumber(), 2);
                     ts3.setValueAt(null, processor.getNumber(), 3);
                   }
                   tps1.append(event.getLog());
@@ -393,74 +415,130 @@ public class MainGUI
     tabbedPane.addTab("step", second);
 
     //TODO 4 step
-    JPanel third = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow]"));
-//    XYSeries series = new XYSeries("sin(a)");
-//    for(float i = 0; i <= Math.PI; i+=0.01){
-//      series.add(i, Math.sin(i));
-//    }
-//    XYDataset xyDataset = new XYSeriesCollection(series);
-//    JFreeChart chart = ChartFactory
-//      .createXYLineChart("y = sin(x)", "x", "y",
-//                         xyDataset,
-//                         PlotOrientation.VERTICAL,
-//                         true, true, true);
-//    third.add(new ChartPanel(chart), "wrap");
-//    third.add(new JButton("Ok"));
+    JPanel third = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][]"));
+    //[COM] Charts
+    JFreeChart chart1 = createChart("RejectProbability", "Count", "Probability", null);
+    third.add(new ChartPanel(chart1));
+    JFreeChart chart2 = createChart("LifeTime", "Count", "Time", null);
+    third.add(new ChartPanel(chart2));
+    JFreeChart chart3 = createChart("ProcessorsUsingRate", "Count", "Rate", null);
+    third.add(new ChartPanel(chart3), "wrap");
+    //[COM] input places
+    JComboBox<String> comboBox = new JComboBox<>(new String[]{"Source", "Processor", "Buffer"});
+    third.add(comboBox);
+    third.add(new JLabel("From"), "split 6");
+    JTextField tft1 = new JTextField("10");
+    third.add(tft1);
+    third.add(new JLabel("To"));
+    JTextField tft2 = new JTextField("100");
+    third.add(tft2);
+    third.add(new JLabel("Value"));
+    JTextField tft3 = new JTextField("1.0");
+    third.add(tft3);
+    comboBox.addActionListener(e -> tft3.setEnabled(comboBox.getSelectedIndex() != 2));
+    JButton bt1 = new JButton("Stop");
+    bt1.setEnabled(false);
+    third.add(bt1, "split 2");
+    JButton bt2 = new JButton("Launch");
+    third.add(bt2);
+    //TODO progress
+    //[COM] Stop button
+    bt1.addActionListener(e -> {
+      bt2.setEnabled(true);
+      bt1.setEnabled(false);
+      for (int i = simToAnalyze.size() - threadPass; i < simToAnalyze.size(); i++)
+      {
+        simToAnalyze.get(i).interrupt();
+      }
+      simToAnalyze.clear();
+      simToAnalyze = null;
+    });
+    //[COM] Launch button
+    bt2.addActionListener(e -> {
+      simToAnalyze = new ArrayList<>();
+      bt2.setEnabled(false);
+      bt1.setEnabled(true);
+      analyze(comboBox.getSelectedIndex(), new JFreeChart[]{chart1, chart2, chart3}, Integer.parseInt(tft1.getText()), Integer.parseInt(tft2.getText()), Double.parseDouble(tft3.getText()), threadPass, debug);
+    });
     tabbedPane.addTab("analyze", third);
 
 
-    JPanel fourth = new JPanel(
-      new MigLayout("", "[grow,fill]", "[grow,fill][]"));
+    JPanel fourth = new JPanel(new MigLayout("", "[grow,fill]", "[grow,fill][]"));
     SimulationConfig.ConfigJSON config = SimulationConfig
       .readJSON(debug ? "src/main/resources/config.json" : "config.json");
-    JTable tfh1 = createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
-    initTableRows(tfh1, config.getSources().size());
-    setTableLambdas(tfh1, config.getSources());
-    JTable tfh2 = createTable(new String[]{"ProcessorNumber", "Lambda"}, Collections.singletonList(1));
-    initTableRows(tfh2, config.getProcessors().size());
-    setTableLambdas(tfh2, config.getProcessors());
-    fourth.add(new JScrollPane(tfh1));
-    fourth.add(new JScrollPane(tfh2), "wrap");
-    JTextField tffh1 = new JTextField(String.valueOf(config.getSources().size()));
-    fourth.add(tffh1, "split 2");
-    JButton bfh1 = new JButton("Set sources count");
-    bfh1.addActionListener(e -> addOrDeleteRows(tfh1, Integer.parseInt(tffh1.getText())));
-    fourth.add(bfh1);
-    JTextField tffh2 = new JTextField(String.valueOf(config.getProcessors().size()));
-    fourth.add(tffh2, "split 2");
-    JButton bfh2 = new JButton("Set processors count");
-    bfh2.addActionListener(e -> addOrDeleteRows(tfh2, Integer.parseInt(tffh2.getText())));
-    fourth.add(bfh2, "wrap");
-    JLabel lfh1 = new JLabel("Buffer Capacity");
-    fourth.add(lfh1, "split 2");
-    JTextField tffh3 = new JTextField(String.valueOf(config.getBufferCapacity()));
-    fourth.add(tffh3);
-    JLabel lfh2 = new JLabel("Requests Count");
-    fourth.add(lfh2, "split 2");
-    JTextField tffh4 = new JTextField(String.valueOf(config.getRequestsCount()));
-    fourth.add(tffh4, "wrap");
-    JButton bfh3 = new JButton("Refresh");
-    bfh3.addActionListener(e -> {
+    //[COM] JSON tables
+    JTable th1 = createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
+    initTableRows(th1, config.getSources().size());
+    setTableLambdas(th1, config.getSources());
+    JTable th2 = createTable(new String[]{"ProcessorNumber", "Lambda"}, Collections.singletonList(1));
+    initTableRows(th2, config.getProcessors().size());
+    setTableLambdas(th2, config.getProcessors());
+    fourth.add(new JScrollPane(th1));
+    fourth.add(new JScrollPane(th2), "wrap");
+    //[COM] set elements count
+    JTextField tfh1 = new JTextField(String.valueOf(config.getSources().size()));
+    fourth.add(tfh1, "split 2");
+    JButton bh1 = new JButton("Set sources count");
+    bh1.addActionListener(e -> addOrDeleteRows(th1, Integer.parseInt(tfh1.getText())));
+    fourth.add(bh1);
+    JTextField tfh2 = new JTextField(String.valueOf(config.getProcessors().size()));
+    fourth.add(tfh2, "split 2");
+    JButton bh2 = new JButton("Set processors count");
+    bh2.addActionListener(e -> addOrDeleteRows(th2, Integer.parseInt(tfh2.getText())));
+    fourth.add(bh2, "wrap");
+    //[COM] set lambdas
+    JTextField tfh11 = new JTextField("1.0");
+    fourth.add(tfh11, "split 2");
+    JButton bh11 = new JButton("Set sources lambdas");
+    bh11.addActionListener(e -> {
+      String val = tfh11.getText();
+      for (int i = 0; i < th1.getRowCount(); i++)
+      {
+        th1.setValueAt(val, i, 1);
+      }
+    });
+    fourth.add(bh11);
+    JTextField tfh21 = new JTextField("1.0");
+    fourth.add(tfh21, "split 2");
+    JButton bh21 = new JButton("Set processors lambdas");
+    bh21.addActionListener(e -> {
+      String val = tfh21.getText();
+      for (int i = 0; i < th2.getRowCount(); i++)
+      {
+        th1.setValueAt(val, i, 1);
+      }
+    });
+    fourth.add(bh21, "wrap");
+    //[COM] set BufferCapacity RequestCount
+    fourth.add(new JLabel("Buffer Capacity"), "split 2");
+    JTextField tfh3 = new JTextField(String.valueOf(config.getBufferCapacity()));
+    fourth.add(tfh3);
+    fourth.add(new JLabel("Requests Count"), "split 2");
+    JTextField tfh4 = new JTextField(String.valueOf(config.getRequestsCount()));
+    fourth.add(tfh4, "wrap");
+    //[COM] Refresh Save JSON
+    JButton bh3 = new JButton("Refresh");
+    bh3.addActionListener(e -> {
       SimulationConfig.ConfigJSON configRefresh = SimulationConfig
         .readJSON(debug ? "src/main/resources/config.json" : "config.json");
-      clearTable(tfh1);
-      initTableRows(tfh1, configRefresh.getSources().size());
-      setTableLambdas(tfh1, configRefresh.getSources());
-      clearTable(tfh2);
-      initTableRows(tfh2, configRefresh.getProcessors().size());
-      setTableLambdas(tfh2, configRefresh.getProcessors());
-      tffh1.setText(String.valueOf(configRefresh.getSources().size()));
-      tffh2.setText(String.valueOf(configRefresh.getProcessors().size()));
-      tffh3.setText(String.valueOf(configRefresh.getBufferCapacity()));
-      tffh4.setText(String.valueOf(configRefresh.getRequestsCount()));
+      clearTable(th1);
+      initTableRows(th1, configRefresh.getSources().size());
+      setTableLambdas(th1, configRefresh.getSources());
+      clearTable(th2);
+      initTableRows(th2, configRefresh.getProcessors().size());
+      setTableLambdas(th2, configRefresh.getProcessors());
+      tfh1.setText(String.valueOf(configRefresh.getSources().size()));
+      tfh2.setText(String.valueOf(configRefresh.getProcessors().size()));
+      tfh3.setText(String.valueOf(configRefresh.getBufferCapacity()));
+      tfh4.setText(String.valueOf(configRefresh.getRequestsCount()));
     });
-    fourth.add(bfh3);
-    JButton bfh4 = new JButton("Save");
-    bfh4.addActionListener(e -> {
-      ArrayList<Double> sources = getTableLambdas(tfh1);
-      ArrayList<Double> processors = getTableLambdas(tfh2);
-      int bufferCapacity = Integer.parseInt(tffh3.getText());
-      int requestsCount = Integer.parseInt(tffh4.getText());
+    fourth.add(bh3);
+    JButton bh4 = new JButton("Save");
+    bh4.addActionListener(e -> {
+      ArrayList<Double> sources = getTableLambdas(th1);
+      ArrayList<Double> processors = getTableLambdas(th2);
+      int bufferCapacity = Integer.parseInt(tfh3.getText());
+      int requestsCount = Integer.parseInt(tfh4.getText());
       SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(sources, processors, bufferCapacity,
                                                                                requestsCount);
       String fileName = debug ? "src/main/resources/config.json" : "config.json";
@@ -476,7 +554,7 @@ public class MainGUI
         exception.printStackTrace();
       }
     });
-    fourth.add(bfh4);
+    fourth.add(bh4);
     tabbedPane.addTab("settings", fourth);
 
     frame.add(tabbedPane);
@@ -522,6 +600,11 @@ public class MainGUI
     table.setCellSelectionEnabled(false);
     table.setFocusable(false);
     return table;
+  }
+
+  private JFreeChart createChart(String title, String xl, String yl, XYDataset ds)
+  {
+    return ChartFactory.createXYLineChart(title, xl, yl, ds, PlotOrientation.VERTICAL, true, true, true);
   }
 
   private void clearRowWithMove(JTable table, int rowIndex)
@@ -583,6 +666,123 @@ public class MainGUI
       lamdas.add(Double.valueOf(String.valueOf(table.getValueAt(i, 1))));
     }
     return lamdas;
+  }
+
+  private void analyze(int var, JFreeChart[] charts, int from, int to, double val, int count, boolean debug)
+  {
+    for (JFreeChart chart : charts)
+    {
+      chart.getXYPlot().setDataset(null);
+    }
+
+    Thread thread = new Thread(() -> {
+      ArrayList<Simulator> buffer = new ArrayList<>();
+      SimulationConfig.ConfigJSON config = SimulationConfig
+        .readJSON(debug ? "src/main/resources/config.json" : "config.json");
+      String name = "";
+      switch (var)
+      {
+        case 0 -> name = "Source";
+        case 1 -> name = "Processor";
+        case 2 -> name = "BufferCapacity";
+      }
+      XYSeries series0 = new XYSeries(name);
+      XYSeries series1 = new XYSeries(name);
+      XYSeries series2 = new XYSeries(name);
+
+      for (int i = from; i <= to; i++)
+      {
+        if (simToAnalyze == null)
+        {
+          return;
+        }
+        ArrayList<Double> source;
+        ArrayList<Double> processor;
+        int bufferCapacity;
+        switch (var)
+        {
+          case 0 -> {
+            source = new ArrayList<>();
+            for (int j = 0; j < i; j++)
+            {
+              source.add(val);
+            }
+            processor = new ArrayList<>(config.getProcessors());
+            bufferCapacity = config.getBufferCapacity();
+          }
+          case 1 -> {
+            source = new ArrayList<>(config.getSources());
+            processor = new ArrayList<>();
+            for (int j = 0; j < i; j++)
+            {
+              processor.add(val);
+            }
+            bufferCapacity = config.getBufferCapacity();
+          }
+          case 2 -> {
+            source = new ArrayList<>(config.getSources());
+            processor = new ArrayList<>(config.getProcessors());
+            bufferCapacity = i;
+          }
+          default -> {
+            source = new ArrayList<>(config.getSources());
+            processor = new ArrayList<>(config.getProcessors());
+            bufferCapacity = config.getBufferCapacity();
+          }
+        }
+        buffer.add(new Simulator(new SimulationConfig(
+          new SimulationConfig.ConfigJSON(source, processor, bufferCapacity, config.getRequestsCount()))));
+        if (i >= to || buffer.size() >= count)
+        {
+          if (simToAnalyze == null)
+          {
+            return;
+          }
+          simToAnalyze.addAll(buffer);
+          for (Simulator simulator : buffer)
+          {
+            simulator.start();
+          }
+          int ind = 0;
+          for (Simulator simulator : buffer)
+          {
+            try
+            {
+              simulator.join();
+            }
+            catch (Exception e)
+            {
+              e.printStackTrace();
+              return;
+            }
+            if (simToAnalyze == null)
+            {
+              return;
+            }
+            series0.add(i - count + ind, ((double) simulator.getProductionManager().getFullRejectCount() /
+                                  (double) config.getRequestsCount()));
+            double time = 0;
+            for (ArrayList<Request> requests : simulator.getSelectionManager().getSuccessRequests())
+            {
+              time += requests.stream().mapToDouble(Request::getLifeTime).sum();
+            }
+            series1.add(i - count + ind, time / simulator.getSelectionManager().getFullSuccessCount());
+            time = 0;
+            for (Processor p : simulator.getSelectionManager().getProcessors())
+            {
+              time += p.getWorkTime() / simulator.getEndTime();
+            }
+            series2.add(i - count + ind, time / simulator.getSelectionManager().getProcessors().size());
+            ind++;
+          }
+          charts[0].getXYPlot().setDataset(new XYSeriesCollection(series0));
+          charts[1].getXYPlot().setDataset(new XYSeriesCollection(series1));
+          charts[2].getXYPlot().setDataset(new XYSeriesCollection(series2));
+          buffer.clear();
+        }
+      }
+    });
+    thread.start();
   }
 
   public static void main(String[] args)
