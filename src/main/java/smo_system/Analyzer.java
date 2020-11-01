@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public class Analyzer
 {
-  private class Results
+  private static class Results
   {
     public boolean isSource;
     public int number = 0;
@@ -29,7 +29,6 @@ public class Analyzer
     }
   }
 
-
   private final Simulator simulator;
   private final ArrayList<Results> sourcesResult;
   private final ArrayList<Results> processorsResult;
@@ -43,13 +42,6 @@ public class Analyzer
     this.processorsResult = new ArrayList<>();
   }
 
-  public Analyzer(String fileName)
-  {
-    this.simulator = new Simulator(fileName);
-    this.sourcesResult = new ArrayList<>();
-    this.processorsResult = new ArrayList<>();
-  }
-
   public void analyze(boolean simulated)
   {
     if (!simulated)
@@ -58,7 +50,6 @@ public class Analyzer
     }
     analyzeSources();
     analyzeProcessors();
-//    printResults();
   }
 
   public ArrayList<ArrayList<String>> getSourceResults()
@@ -137,7 +128,6 @@ public class Analyzer
     private final boolean debug;
     private int N0;
     private Simulator lastSimulator = null;
-
 
     public RequestCountAnalyzer(int N0, boolean debug)
     {

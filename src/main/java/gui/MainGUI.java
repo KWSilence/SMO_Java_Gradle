@@ -14,7 +14,6 @@ import smo_system.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -31,7 +30,6 @@ public class MainGUI
   private ArrayList<Simulator> simToAnalyze = new ArrayList<>();
   private final HashMap<String, Simulator> simulators = new HashMap<>();
   private boolean skipState = false;
-  private final int threadPass = 5;
 
   MainGUI(boolean debug)
   {
@@ -432,15 +430,18 @@ public class MainGUI
     //[COM] input places
     JComboBox<String> comboBox = new JComboBox<>(new String[]{"Source", "Processor", "Buffer"});
     third.add(comboBox);
-    third.add(new JLabel("From"), "split 6");
+    third.add(new JLabel("From"), "split 8");
     JTextField tft1 = new JTextField("10");
     third.add(tft1);
     third.add(new JLabel("To"));
     JTextField tft2 = new JTextField("100");
     third.add(tft2);
-    third.add(new JLabel("Value"));
+    third.add(new JLabel("Lambda"));
     JTextField tft3 = new JTextField("1.0");
     third.add(tft3);
+    third.add(new JLabel("VStep"));
+    JTextField tft4 = new JTextField("5");
+    third.add(tft4);
     comboBox.addActionListener(e -> tft3.setEnabled(comboBox.getSelectedIndex() != 2));
     JButton bt1 = new JButton("Stop");
     bt1.setEnabled(false);
@@ -468,7 +469,8 @@ public class MainGUI
       int from = Integer.parseInt(tft1.getText());
       int to = Integer.parseInt(tft2.getText());
       double val = Double.parseDouble(tft3.getText());
-      analyze(var, new JFreeChart[]{chart1, chart2, chart3}, from, to, val, threadPass, debug, new JButton[]{bt1, bt2});
+      int step = Integer.parseInt(tft4.getText());
+      analyze(var, new JFreeChart[]{chart1, chart2, chart3}, from, to, val, step, debug, new JButton[]{bt1, bt2});
     });
     tabbedPane.addTab("analyze", third);
 
@@ -670,12 +672,12 @@ public class MainGUI
 
   private ArrayList<Double> getTableLambdas(JTable table)
   {
-    ArrayList<Double> lamdas = new ArrayList<>();
+    ArrayList<Double> lambdas = new ArrayList<>();
     for (int i = 0; i < table.getRowCount(); i++)
     {
-      lamdas.add(Double.valueOf(String.valueOf(table.getValueAt(i, 1))));
+      lambdas.add(Double.valueOf(String.valueOf(table.getValueAt(i, 1))));
     }
-    return lamdas;
+    return lambdas;
   }
 
   private void analyze(int var, JFreeChart[] charts, int from, int to, double val, int count, boolean debug,
@@ -693,9 +695,9 @@ public class MainGUI
       String name = "";
       switch (var)
       {
-        case 0 -> name = "Source";
-        case 1 -> name = "Processor";
-        case 2 -> name = "BufferCapacity";
+        case 0 -> name = "Source[" + from + ":" + to + "], lambda=" + val;
+        case 1 -> name = "Processor[" + from + ":" + to + "], lambda=" + val;
+        case 2 -> name = "BufferCapacity[" + from + ":" + to + "]";
       }
       XYSeries series0 = new XYSeries(name);
       XYSeries series1 = new XYSeries(name);
@@ -766,7 +768,7 @@ public class MainGUI
             }
             int index = i - buffer.size() + ind;
             series0.add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
-                                          (double) config.getRequestsCount()));
+                                (double) config.getRequestsCount()));
             double time = 0;
             for (ArrayList<Request> requests : simulator.getSelectionManager().getSuccessRequests())
             {
