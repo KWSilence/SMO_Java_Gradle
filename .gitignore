@@ -140,3 +140,6 @@ gradle-app.setting
 
 ### Gradle Patch ###
 **/build/
+
+### MY ###
+src/main/resources/config.json

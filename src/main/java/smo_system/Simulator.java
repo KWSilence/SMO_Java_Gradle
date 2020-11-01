@@ -235,9 +235,8 @@ public class Simulator extends Thread
         }
       }
     }
-    catch (Exception e)
+    catch (Exception ignored)
     {
-      e.printStackTrace();
     }
   }
 }

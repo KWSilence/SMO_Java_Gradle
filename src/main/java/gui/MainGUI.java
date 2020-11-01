@@ -14,6 +14,7 @@ import smo_system.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -373,15 +374,20 @@ public class MainGUI
                   }
 
                   tabbedPane.setSelectedIndex(0);
-                  bs2.setEnabled(false);
+
+                  simulators.put("steps", null);
+                  bs2.setText("Start Steps");
+                  bs2.setEnabled(true);
+                  bs1.setEnabled(false);
+                  bs3.setEnabled(false);
+                  skipState = false;
                 }
               }
               pbs1.setValue(finalSimulator.getProgress());
             } while (skipState);
           }
-          catch (Exception ex)
+          catch (Exception ignored)
           {
-            ex.printStackTrace();
           }
         };
       }
@@ -446,9 +452,9 @@ public class MainGUI
     bt1.addActionListener(e -> {
       bt2.setEnabled(true);
       bt1.setEnabled(false);
-      for (int i = simToAnalyze.size() - threadPass; i < simToAnalyze.size(); i++)
+      for (Simulator simulator : simToAnalyze)
       {
-        simToAnalyze.get(i).interrupt();
+        simulator.interrupt();
       }
       simToAnalyze.clear();
       simToAnalyze = null;
@@ -458,7 +464,11 @@ public class MainGUI
       simToAnalyze = new ArrayList<>();
       bt2.setEnabled(false);
       bt1.setEnabled(true);
-      analyze(comboBox.getSelectedIndex(), new JFreeChart[]{chart1, chart2, chart3}, Integer.parseInt(tft1.getText()), Integer.parseInt(tft2.getText()), Double.parseDouble(tft3.getText()), threadPass, debug);
+      int var = comboBox.getSelectedIndex();
+      int from = Integer.parseInt(tft1.getText());
+      int to = Integer.parseInt(tft2.getText());
+      double val = Double.parseDouble(tft3.getText());
+      analyze(var, new JFreeChart[]{chart1, chart2, chart3}, from, to, val, threadPass, debug, new JButton[]{bt1, bt2});
     });
     tabbedPane.addTab("analyze", third);
 
@@ -668,7 +678,8 @@ public class MainGUI
     return lamdas;
   }
 
-  private void analyze(int var, JFreeChart[] charts, int from, int to, double val, int count, boolean debug)
+  private void analyze(int var, JFreeChart[] charts, int from, int to, double val, int count, boolean debug,
+                       JButton[] b)
   {
     for (JFreeChart chart : charts)
     {
@@ -719,15 +730,10 @@ public class MainGUI
             }
             bufferCapacity = config.getBufferCapacity();
           }
-          case 2 -> {
-            source = new ArrayList<>(config.getSources());
-            processor = new ArrayList<>(config.getProcessors());
-            bufferCapacity = i;
-          }
           default -> {
             source = new ArrayList<>(config.getSources());
             processor = new ArrayList<>(config.getProcessors());
-            bufferCapacity = config.getBufferCapacity();
+            bufferCapacity = i;
           }
         }
         buffer.add(new Simulator(new SimulationConfig(
@@ -743,7 +749,7 @@ public class MainGUI
           {
             simulator.start();
           }
-          int ind = 0;
+          int ind = 1;
           for (Simulator simulator : buffer)
           {
             try
@@ -752,35 +758,40 @@ public class MainGUI
             }
             catch (Exception e)
             {
-              e.printStackTrace();
               return;
             }
             if (simToAnalyze == null)
             {
               return;
             }
-            series0.add(i - count + ind, ((double) simulator.getProductionManager().getFullRejectCount() /
-                                  (double) config.getRequestsCount()));
+            int index = i - buffer.size() + ind;
+            series0.add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
+                                          (double) config.getRequestsCount()));
             double time = 0;
             for (ArrayList<Request> requests : simulator.getSelectionManager().getSuccessRequests())
             {
               time += requests.stream().mapToDouble(Request::getLifeTime).sum();
             }
-            series1.add(i - count + ind, time / simulator.getSelectionManager().getFullSuccessCount());
+            series1.add(index, time / simulator.getSelectionManager().getFullSuccessCount());
             time = 0;
             for (Processor p : simulator.getSelectionManager().getProcessors())
             {
               time += p.getWorkTime() / simulator.getEndTime();
             }
-            series2.add(i - count + ind, time / simulator.getSelectionManager().getProcessors().size());
+            series2.add(index, time / simulator.getSelectionManager().getProcessors().size());
             ind++;
           }
           charts[0].getXYPlot().setDataset(new XYSeriesCollection(series0));
           charts[1].getXYPlot().setDataset(new XYSeriesCollection(series1));
           charts[2].getXYPlot().setDataset(new XYSeriesCollection(series2));
           buffer.clear();
+          simToAnalyze.clear();
         }
       }
+      b[1].setEnabled(true);
+      b[0].setEnabled(false);
+      simToAnalyze.clear();
+      simToAnalyze = null;
     });
     thread.start();
   }
