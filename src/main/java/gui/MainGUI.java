@@ -33,22 +33,7 @@ public class MainGUI
 
   MainGUI(boolean debug)
   {
-    File configFile = new File(debug ? "src/main/resources/config.json" : "config.json");
-    if (!configFile.exists())
-    {
-      try
-      {
-        PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
-        Gson gson = new Gson();
-        writer.print(gson.toJson(new SimulationConfig.ConfigJSON(new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0)),
-                                                                 new ArrayList<>(Arrays.asList(1.0, 1.0)), 3, 1000)));
-        writer.close();
-      }
-      catch (IOException e)
-      {
-        e.printStackTrace();
-      }
-    }
+    initConfig(debug ? "src/main/resources/config.json" : "config.json");
 
     simulators.put("steps", null);
     simulators.put("auto", null);
@@ -58,27 +43,37 @@ public class MainGUI
 
     JTabbedPane tabbedPane = new JTabbedPane();
 
+    //[COM]{TAB} Tab Auto
     JPanel first = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"));
+    //[COM]{ELEMENT} Tab Auto: sources results table
     JTable tf1 = createTable(
       new String[]{"Source", "RequestsGen", "RejectProb", "StayTime", "WaitingTime", "ProcTime", "DisWaitingTime",
                    "DisProcTime"}, null);
     first.add(new JScrollPane(tf1), "wrap, span, grow");
+    //[COM]{ELEMENT} Tab Auto: processors results table
     JTable tf2 = createTable(new String[]{"Processor", "UsageRate"}, null);
     first.add(new JScrollPane(tf2), "wrap, span");
+    //[COM]{ELEMENT} Tab Auto: progressbar
     JProgressBar pbf1 = new JProgressBar();
     pbf1.setMinimum(0);
     first.add(pbf1);
+    //[COM]{ELEMENT} Tab Auto: stop button
     JButton bf1 = new JButton("Stop");
     bf1.setEnabled(false);
     first.add(bf1, "split 4");
+    //[COM]{ELEMENT} Tab Auto: start button
     JButton bf2 = new JButton("Start Auto");
     first.add(bf2);
+    //[COM]{ELEMENT} Tab Auto: use N0 checkbox
     JCheckBox cbf1 = new JCheckBox("Use N0");
     first.add(cbf1);
+    //[COM]{ELEMENT} Tab Auto: "N0" text field
     JTextField tff1 = new JTextField("100");
     tff1.setEnabled(false);
     first.add(tff1);
+    //[COM]{ACTION} Tab Auto: use N0 checkbox
     cbf1.addActionListener(e -> tff1.setEnabled(cbf1.isSelected()));
+    //[COM]{ACTION} Tab Auto: start button
     bf2.addActionListener(e -> {
       SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
                                                 : new SimulationConfig("config.json");
@@ -89,7 +84,6 @@ public class MainGUI
       initTableRows(tf2, simulationConfig.getProcessors().size());
 
       final int N0;
-
       if (cbf1.isSelected())
       {
         N0 = Integer.parseInt(tff1.getText());
@@ -105,7 +99,6 @@ public class MainGUI
       }
 
       pbf1.setValue(0);
-
       bf2.setEnabled(false);
       bf1.setEnabled(true);
 
@@ -175,9 +168,9 @@ public class MainGUI
         bf2.setEnabled(true);
         bf1.setEnabled(false);
       });
-
       lineMover.start();
     });
+    //[COM]{ACTION} Tab Auto: stop button
     bf1.addActionListener(e -> {
       lineMover.interrupt();
       Simulator simulator = simulators.get("auto");
@@ -191,33 +184,44 @@ public class MainGUI
     });
     tabbedPane.addTab("auto", first);
 
-
+    //[COM]{TAB} Tab Step
     JPanel second = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"));
+    //[COM]{ELEMENT} Tab Step: source table
     JTable ts1 = createTable(new String[]{"Source", "Request", "GenerateTime"}, null);
     second.add(new JScrollPane(ts1));
+    //[COM]{ELEMENT} Tab Step: buffer table
     JTable ts2 = createTable(new String[]{"Buffer", "Request", "TakeTime"}, null);
     second.add(new JScrollPane(ts2), "wrap");
+    //[COM]{ELEMENT} Tab Step: processor table
     JTable ts3 = createTable(new String[]{"Processor", "Request", "TakeTime", "ReleaseTime"}, null);
     second.add(new JScrollPane(ts3));
+    //[COM]{ELEMENT} Tab Step: log area
     JTextArea tps1 = new JTextArea();
     tps1.setEditable(false);
     JScrollPane sps1 = new JScrollPane(tps1);
     second.add(sps1, "wrap");
+    //[COM]{ELEMENT} Tab Step: progressbar
     JProgressBar pbs1 = new JProgressBar();
     pbs1.setMinimum(0);
     second.add(pbs1);
+    //[COM]{ELEMENT} Tab Step: stop button
     JButton bs1 = new JButton("Stop");
     bs1.setEnabled(false);
     second.add(bs1, "split 4");
+    //[COM]{ELEMENT} Tab Step: start button
     JButton bs2 = new JButton("Start Steps");
     second.add(bs2);
+    //[COM]{ELEMENT} Tab Step: skip button
     JButton bs3 = new JButton("Skip");
+    bs3.setEnabled(false);
     second.add(bs3);
+    //[COM]{ELEMENT} Tab Step: auto scroll checkbox
     JCheckBox cbs1 = new JCheckBox("textAutoScroll");
     second.add(cbs1);
+    //[COM]{ACTION} Tab Step: auto scroll event using checkbox
     sps1.getVerticalScrollBar().addAdjustmentListener(e -> e.getAdjustable().setValue(
       cbs1.isSelected() ? e.getAdjustable().getMaximum() : e.getAdjustable().getValue()));
-    bs3.setEnabled(false);
+    //[COM]{ACTION} Tab Step: start button
     bs2.addActionListener(e -> {
       Simulator simulator = simulators.get("steps");
       if (simulator == null)
@@ -401,6 +405,7 @@ public class MainGUI
         }
       }
     });
+    //[COM]{ACTION} Tab Step: stop button
     bs1.addActionListener(e -> {
       simulators.get("steps").interrupt();
       simulators.put("steps", null);
@@ -410,6 +415,7 @@ public class MainGUI
       bs3.setEnabled(false);
       skipState = false;
     });
+    //[COM]{ACTION} Tab Step: skip button
     bs3.addActionListener(e -> {
       bs3.setEnabled(false);
       skipState = true;
@@ -418,38 +424,46 @@ public class MainGUI
     });
     tabbedPane.addTab("step", second);
 
-    //TODO 4 step
+    //[COM]{TAB} Tab Analyze
     JPanel third = new JPanel(new MigLayout("", "[fill, grow]", "[fill, grow][]"));
-    //[COM] Charts
+    //[COM]{ELEMENT} Tab Analyze: reject probability chart
     JFreeChart chart1 = createChart("RejectProbability", "Count", "Probability", null);
     third.add(new ChartPanel(chart1));
+    //[COM]{ELEMENT} Tab Analyze: life time chart
     JFreeChart chart2 = createChart("LifeTime", "Count", "Time", null);
     third.add(new ChartPanel(chart2));
+    //[COM]{ELEMENT} Tab Analyze: processors using rate chart
     JFreeChart chart3 = createChart("ProcessorsUsingRate", "Count", "Rate", null);
     third.add(new ChartPanel(chart3), "wrap");
-    //[COM] input places
+    //[COM]{ELEMENT} Tab Analyze: selection of variable element combobox
     JComboBox<String> comboBox = new JComboBox<>(new String[]{"Source", "Processor", "Buffer"});
     third.add(comboBox);
+    //[COM]{ELEMENT} Tab Analyze: "from" text field
     third.add(new JLabel("From"), "split 8");
     JTextField tft1 = new JTextField("10");
     third.add(tft1);
+    //[COM]{ELEMENT} Tab Analyze: "to" text field
     third.add(new JLabel("To"));
     JTextField tft2 = new JTextField("100");
     third.add(tft2);
+    //[COM]{ELEMENT} Tab Analyze: "lambda" text field
     third.add(new JLabel("Lambda"));
     JTextField tft3 = new JTextField("1.0");
     third.add(tft3);
+    //[COM]{ELEMENT} Tab Analyze: visualization step for charts text field -- threads count
     third.add(new JLabel("VStep"));
     JTextField tft4 = new JTextField("5");
     third.add(tft4);
+    //[COM]{ACTION} Tab Analyze: combobox change buffer->!lambda
     comboBox.addActionListener(e -> tft3.setEnabled(comboBox.getSelectedIndex() != 2));
+    //[COM]{ELEMENT} Tab Analyze: stop button
     JButton bt1 = new JButton("Stop");
     bt1.setEnabled(false);
     third.add(bt1, "split 2");
+    //[COM]{ELEMENT} Tab Analyze: start button
     JButton bt2 = new JButton("Launch");
     third.add(bt2);
-    //TODO progress
-    //[COM] Stop button
+    //[COM]{ACTION} Tab Analyze: stop button
     bt1.addActionListener(e -> {
       bt2.setEnabled(true);
       bt1.setEnabled(false);
@@ -460,7 +474,7 @@ public class MainGUI
       simToAnalyze.clear();
       simToAnalyze = null;
     });
-    //[COM] Launch button
+    //[COM]{ACTION} Tab Analyze: start button
     bt2.addActionListener(e -> {
       simToAnalyze = new ArrayList<>();
       bt2.setEnabled(false);
@@ -474,34 +488,42 @@ public class MainGUI
     });
     tabbedPane.addTab("analyze", third);
 
-
+    //[COM]{TAB} Tab Settings
     JPanel fourth = new JPanel(new MigLayout("", "[grow,fill]", "[grow,fill][]"));
     SimulationConfig.ConfigJSON config = SimulationConfig
       .readJSON(debug ? "src/main/resources/config.json" : "config.json");
-    //[COM] JSON tables
+    //[COM]{ELEMENT} Tab Settings: sources tab
     JTable th1 = createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
     initTableRows(th1, config.getSources().size());
     setTableLambdas(th1, config.getSources());
+    fourth.add(new JScrollPane(th1));
+    //[COM]{ELEMENT} Tab Settings: processors tab
     JTable th2 = createTable(new String[]{"ProcessorNumber", "Lambda"}, Collections.singletonList(1));
     initTableRows(th2, config.getProcessors().size());
     setTableLambdas(th2, config.getProcessors());
-    fourth.add(new JScrollPane(th1));
     fourth.add(new JScrollPane(th2), "wrap");
-    //[COM] set elements count
+    //[COM]{ELEMENT} Tab Settings: sources count text field
     JTextField tfh1 = new JTextField(String.valueOf(config.getSources().size()));
     fourth.add(tfh1, "split 2");
+    //[COM]{ELEMENT} Tab Settings: set sources count button
     JButton bh1 = new JButton("Set sources count");
+    //[COM]{ACTION} Tab Settings: set sources count button
     bh1.addActionListener(e -> addOrDeleteRows(th1, Integer.parseInt(tfh1.getText())));
     fourth.add(bh1);
+    //[COM]{ELEMENT} Tab Settings: processors count text field
     JTextField tfh2 = new JTextField(String.valueOf(config.getProcessors().size()));
     fourth.add(tfh2, "split 2");
+    //[COM]{ELEMENT} Tab Settings: set processors count button
     JButton bh2 = new JButton("Set processors count");
+    //[COM]{ACTION} Tab Settings: set processors count button
     bh2.addActionListener(e -> addOrDeleteRows(th2, Integer.parseInt(tfh2.getText())));
     fourth.add(bh2, "wrap");
-    //[COM] set lambdas
+    //[COM]{ELEMENT} Tab Settings: source lambdas text field
     JTextField tfh11 = new JTextField("1.0");
     fourth.add(tfh11, "split 2");
+    //[COM]{ELEMENT} Tab Settings: set source lambdas button
     JButton bh11 = new JButton("Set sources lambdas");
+    //[COM]{ACTION} Tab Settings: set source Lambdas button
     bh11.addActionListener(e -> {
       String val = tfh11.getText();
       for (int i = 0; i < th1.getRowCount(); i++)
@@ -510,9 +532,12 @@ public class MainGUI
       }
     });
     fourth.add(bh11);
+    //[COM]{ELEMENT} Tab Settings: processor lambdas text field
     JTextField tfh21 = new JTextField("1.0");
     fourth.add(tfh21, "split 2");
+    //[COM]{ELEMENT} Tab Settings: set processor lambdas button
     JButton bh21 = new JButton("Set processors lambdas");
+    //[COM]{ACTION} Tab Settings: set processor lambdas button
     bh21.addActionListener(e -> {
       String val = tfh21.getText();
       for (int i = 0; i < th2.getRowCount(); i++)
@@ -521,15 +546,17 @@ public class MainGUI
       }
     });
     fourth.add(bh21, "wrap");
-    //[COM] set BufferCapacity RequestCount
-    fourth.add(new JLabel("Buffer Capacity"), "split 2");
+    //[COM]{ELEMENT} Tab Settings: buffer capacity text field
+    fourth.add(new JLabel("Buffer Capacity"), "split 4");
     JTextField tfh3 = new JTextField(String.valueOf(config.getBufferCapacity()));
     fourth.add(tfh3);
-    fourth.add(new JLabel("Requests Count"), "split 2");
+    //[COM]{ELEMENT} Tab Settings: request count text field
+    fourth.add(new JLabel("Requests Count"));
     JTextField tfh4 = new JTextField(String.valueOf(config.getRequestsCount()));
-    fourth.add(tfh4, "wrap");
-    //[COM] Refresh Save JSON
+    fourth.add(tfh4);
+    //[COM]{ELEMENT} Tab Settings: refresh button
     JButton bh3 = new JButton("Refresh");
+    //[COM]{ACTION} Tab Settings: refresh button
     bh3.addActionListener(e -> {
       SimulationConfig.ConfigJSON configRefresh = SimulationConfig
         .readJSON(debug ? "src/main/resources/config.json" : "config.json");
@@ -544,8 +571,10 @@ public class MainGUI
       tfh3.setText(String.valueOf(configRefresh.getBufferCapacity()));
       tfh4.setText(String.valueOf(configRefresh.getRequestsCount()));
     });
-    fourth.add(bh3);
+    fourth.add(bh3, "split 2");
+    //[COM]{ELEMENT} Tab Settings: save button
     JButton bh4 = new JButton("Save");
+    //[COM]{ACTION} Tab Settings: save button
     bh4.addActionListener(e -> {
       ArrayList<Double> sources = getTableLambdas(th1);
       ArrayList<Double> processors = getTableLambdas(th2);
@@ -796,6 +825,26 @@ public class MainGUI
       simToAnalyze = null;
     });
     thread.start();
+  }
+
+  private void initConfig(String fileName)
+  {
+    File configFile = new File(fileName);
+    if (!configFile.exists())
+    {
+      try
+      {
+        PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
+        Gson gson = new Gson();
+        writer.print(gson.toJson(new SimulationConfig.ConfigJSON(new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0)),
+                                                                 new ArrayList<>(Arrays.asList(1.0, 1.0)), 3, 1000)));
+        writer.close();
+      }
+      catch (IOException e)
+      {
+        e.printStackTrace();
+      }
+    }
   }
 
   public static void main(String[] args)
