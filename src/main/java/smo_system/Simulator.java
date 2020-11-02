@@ -190,7 +190,7 @@ public class Simulator extends Thread
           {
             //sEnd_Work
             lastEvent.setType(SimulatorEvent.EventType.WORK_END);
-            lastEvent.setLog("Simulation complete. You can create Result Table.\n");
+            lastEvent.setLog("Simulation complete.\nYou can create Result Table. Press 'Next Step'\n");
             if (steps)
             {
               synchronized (this)

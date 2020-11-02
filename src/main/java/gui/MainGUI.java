@@ -336,13 +336,11 @@ public class MainGUI
 
                 case WORK_END -> {
                   tps1.append(event.getLog());
-                  bs2.setText("Show Result Table");
                   bs2.setEnabled(true);
+                  bs3.setEnabled(false);
                   if (skipState)
                   {
-                    bs3.setEnabled(false);
                     skipState = false;
-                    return;
                   }
                 }
 
