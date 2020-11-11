@@ -6,12 +6,14 @@ public class Buffer
 {
   private final int capacity;
   private final ArrayList<Request> list;
+  private final ArrayList<Request> requestsPackage;
   private int takeIndex;
 
   public Buffer(int capacity)
   {
     this.capacity = capacity;
     this.list = new ArrayList<>();
+    this.requestsPackage = new ArrayList<>();
     this.takeIndex = 0;
   }
 
@@ -40,6 +42,11 @@ public class Buffer
     return list;
   }
 
+  public ArrayList<Request> getRequestsPackage()
+  {
+    return requestsPackage;
+  }
+
   public int getCapacity()
   {
     return capacity;
@@ -52,30 +59,37 @@ public class Buffer
 
   public Request getRequest()
   {
-    if (isEmpty())
+    return isEmpty() ? null : getPriorityRequest();
+  }
+
+  public void createPackage()
+  {
+    if (requestsPackage.isEmpty() && !list.isEmpty())
     {
-      return null;
+      int priority = list.get(0).getSourceNumber();
+      for (Request request : list)
+      {
+        int current = request.getSourceNumber();
+        if (priority == current)
+        {
+          requestsPackage.add(request);
+        }
+        if (priority > current)
+        {
+          priority = current;
+          requestsPackage.clear();
+          requestsPackage.add(request);
+        }
+      }
     }
-    takeIndex = getPriorityIndex();
-    Request request = list.get(takeIndex);
+  }
+
+  private Request getPriorityRequest()
+  {
+    createPackage();
+    Request request = requestsPackage.remove(0);
+    takeIndex = list.indexOf(request);
     list.remove(takeIndex);
     return request;
   }
-
-  private int getPriorityIndex()
-  {
-    int priority = list.get(0).getSourceNumber();
-    int index = 0;
-    for (int i = 0; i < list.size(); i++)
-    {
-      int current = list.get(i).getSourceNumber();
-      if (priority > current)
-      {
-        priority = current;
-        index = i;
-      }
-    }
-    return index;
-  }
-
 }

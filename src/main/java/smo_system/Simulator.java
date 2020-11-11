@@ -210,6 +210,30 @@ public class Simulator extends Thread
             return;
           }
         }
+
+        selectionManager.selectNearestWorkEvent();
+        //sPackage
+        if (buffer.getRequestsPackage().isEmpty() && selectionManager.canTake())
+        {
+          buffer.createPackage();
+          lastEvent.setType(SimulatorEvent.EventType.PACKAGE);
+          lastEvent.setBuffer(buffer);
+          StringBuilder s = new StringBuilder();
+          for (Request r : buffer.getRequestsPackage())
+          {
+            s.append(r.getSourceNumber()).append(".").append(r.getNumber()).append(", ");
+          }
+          lastEvent.setLog("Create Package: " + s + "\n");
+          if (steps)
+          {
+            synchronized (this)
+            {
+              notify();
+              wait();
+            }
+          }
+        }
+
         boolean successTake = selectionManager.putToProcessor();
         if (successTake)
         {
@@ -235,8 +259,9 @@ public class Simulator extends Thread
         }
       }
     }
-    catch (Exception ignored)
+    catch (Exception ex)
     {
+      ex.printStackTrace();
     }
   }
 }

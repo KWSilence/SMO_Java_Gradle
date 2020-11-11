@@ -278,6 +278,16 @@ public class MainGUI
                   tps1.append(event.getLog());
                 }
 
+                case PACKAGE -> {
+                  Buffer buffer = event.getBuffer();
+                  for (Request request : buffer.getRequestsPackage())
+                  {
+                    int index = buffer.getList().indexOf(request);
+                    ts2.setValueAt((ts2.getValueAt(index, 1) + "P"), index, 1);
+                  }
+                  tps1.append(event.getLog());
+                }
+
                 case TAKE -> {
                   Request request = event.getRequest();
                   Processor processor = event.getProcessor();

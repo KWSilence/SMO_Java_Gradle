@@ -8,7 +8,7 @@ public class SimulatorEvent
 {
   public enum EventType
   {
-    GENERATE, TAKE, BUFFER, REJECT, RELEASE, WORK_END, ANALYZE
+    GENERATE, PACKAGE, TAKE, BUFFER, REJECT, RELEASE, WORK_END, ANALYZE
   }
 
   private EventType type;
@@ -19,7 +19,7 @@ public class SimulatorEvent
 
   public SimulatorEvent()
   {
-    this.type=null;
+    this.type = null;
     this.request = null;
     this.processor = null;
     this.buffer = null;

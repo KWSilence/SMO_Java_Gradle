@@ -97,8 +97,7 @@ public class SelectionManager
     return freeProcessor.getProcessTime();
   }
 
-
-  private void selectNearestWorkEvent()
+  public void selectNearestWorkEvent()
   {
     takeProcessor = processors.get(0);
     for (Processor current : processors)
