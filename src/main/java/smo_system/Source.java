@@ -45,7 +45,7 @@ public class Source
     return currentRequest.getTime();
   }
 
-  public void generateRequest()
+  private void generateRequest()
   {
     double additionalTime = (-1 / lambda) * Math.log(random.nextDouble());
     if (currentRequest == null)

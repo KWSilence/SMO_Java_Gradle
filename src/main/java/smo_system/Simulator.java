@@ -160,7 +160,6 @@ public class Simulator extends Thread
               wait();
             }
           }
-
         }
         else
         {

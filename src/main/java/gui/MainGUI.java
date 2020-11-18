@@ -553,7 +553,7 @@ public class MainGUI
       String val = tfh21.getText();
       for (int i = 0; i < th2.getRowCount(); i++)
       {
-        th1.setValueAt(val, i, 1);
+        th2.setValueAt(val, i, 1);
       }
     });
     fourth.add(bh21, "wrap");
