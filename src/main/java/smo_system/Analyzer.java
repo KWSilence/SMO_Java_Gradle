@@ -147,7 +147,7 @@ public class Analyzer
                                       : new SimulationConfig("config.json");
       final double Ta = 1.643;
       final double d = 0.1;
-      double lastP = -1;
+      double lastP = -10;
       int lastN = 0;
       while (!interrupted())
       {
@@ -172,11 +172,6 @@ public class Analyzer
         }
 
         double p1 = (double) s1.getProductionManager().getFullRejectCount() / (double) N0;
-        if (p1 == 0 || p1 == 1)
-        {
-          lastSimulator = null;
-          break;
-        }
 
         if (debug)
         {
@@ -185,7 +180,13 @@ public class Analyzer
             Math.abs(lastP - p1) + ", dp0=" + (0.1 * lastP) + "]");
         }
 
-        if (Math.abs(lastP - p1) < 0.1 * lastP)
+        if (p1 == 0 || p1 == 1)
+        {
+          lastSimulator = s1;
+          break;
+        }
+
+        if (lastP != -1 && Math.abs(lastP - p1) < 0.1 * lastP)
         {
           break;
         }
