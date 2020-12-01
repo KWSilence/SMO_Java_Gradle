@@ -153,7 +153,7 @@ public class Analyzer
       {
         if (lastP > 0)
         {
-          N0 = (int) Math.round(Ta * (1 - lastP) / (lastP * d * d));
+          N0 = (int) Math.round(Ta * Ta * (1 - lastP) / (lastP * d * d));
         }
 
         SimulationConfig tmpConfig = new SimulationConfig(config.getConfig());
@@ -181,8 +181,8 @@ public class Analyzer
         if (debug)
         {
           System.out.println(
-            "N0=" + lastN + " p0=" + lastP + " N1=" + N0 + " p1=" + p1 + "  [abs=" + Math.abs(lastP - p1) + ", dp0=" +
-            (0.1 * lastP) + "]");
+            (lastN == 0 ? "\n" : "N0=" + lastN + " p0=" + lastP + " ") + "N1=" + N0 + " p1=" + p1 + "  [abs=" +
+            Math.abs(lastP - p1) + ", dp0=" + (0.1 * lastP) + "]");
         }
 
         if (Math.abs(lastP - p1) < 0.1 * lastP)
