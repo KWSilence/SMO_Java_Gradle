@@ -1,4 +1,8 @@
-package smo_system;
+package smo_system.manager;
+
+import smo_system.component.Buffer;
+import smo_system.component.Request;
+import smo_system.component.Source;
 
 import java.util.ArrayList;
 
@@ -84,5 +88,4 @@ public class ProductionManager {
             }
         }
     }
-
 }

@@ -1,7 +1,11 @@
 package configs;
 
 import com.google.gson.Gson;
-import smo_system.*;
+import smo_system.component.Buffer;
+import smo_system.component.Processor;
+import smo_system.component.Source;
+import smo_system.manager.ProductionManager;
+import smo_system.manager.SelectionManager;
 
 import java.io.FileReader;
 import java.util.ArrayList;

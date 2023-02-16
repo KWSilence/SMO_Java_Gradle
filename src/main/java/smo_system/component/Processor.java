@@ -1,4 +1,4 @@
-package smo_system;
+package smo_system.component;
 
 public class Processor {
     private final int number;
@@ -49,5 +49,4 @@ public class Processor {
         currentRequest.setTimeInProcessor(lambda);
         return currentRequest;
     }
-
 }

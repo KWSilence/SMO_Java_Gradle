@@ -1,4 +1,4 @@
-package smo_system;
+package smo_system.component;
 
 import java.util.Random;
 

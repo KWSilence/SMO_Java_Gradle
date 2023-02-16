@@ -10,7 +10,13 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import smo_system.*;
+import smo_system.analyzer.Analyzer;
+import smo_system.analyzer.RequestCountAnalyzer;
+import smo_system.component.Buffer;
+import smo_system.component.Processor;
+import smo_system.component.Request;
+import smo_system.simulator.Simulator;
+import smo_system.simulator.SimulatorEvent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -88,8 +94,6 @@ public class MainGUI {
             } else {
                 N0 = 0;
                 simulators.put("auto", new Simulator(simulationConfig));
-                Simulator simulator = simulators.get("auto");
-                simulator.setUseSteps(false);
                 pbf1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
             }
 
@@ -99,14 +103,8 @@ public class MainGUI {
 
             lineMover = new Thread(() -> {
                 if (cbf1.isSelected()) {
-                    Analyzer.RequestCountAnalyzer analyzer = new Analyzer.RequestCountAnalyzer(N0, debug);
-                    try {
-                        analyzer.start();
-                        analyzer.join();
-                    } catch (Exception exception) {
-                        analyzer.interrupt();
-                        return;
-                    }
+                    RequestCountAnalyzer analyzer = new RequestCountAnalyzer(N0, debug);
+                    analyzer.analyze();
                     pbf1.setValue(pbf1.getMaximum());
                     simulators.put("auto", analyzer.getLastSimulator());
                 } else {
@@ -223,8 +221,6 @@ public class MainGUI {
 
                 simulators.put("steps", new Simulator(simulationConfig));
                 simulator = simulators.get("steps");
-                simulator.setUseSteps(true);
-                simulator.start();
 
                 bs2.setText("Next Step");
                 bs1.setEnabled(true);
@@ -233,14 +229,9 @@ public class MainGUI {
                 Simulator finalSimulator = simulator;
                 task = () -> {
                     try {
+                        boolean canContinue;
                         do {
-                            if (finalSimulator.isInterrupted()) {
-                                return;
-                            }
-                            synchronized (finalSimulator) {
-                                finalSimulator.notify();
-                                finalSimulator.wait();
-                            }
+                            canContinue = finalSimulator.simulationStep();
                             SimulatorEvent event = finalSimulator.getLastEvent();
                             switch (event.getType()) {
                                 case GENERATE -> {
@@ -357,7 +348,7 @@ public class MainGUI {
                                 }
                             }
                             pbs1.setValue(finalSimulator.getProgress());
-                        } while (skipState);
+                        } while (skipState && canContinue);
                     } catch (Exception ignored) {
                     }
                 };
@@ -393,7 +384,7 @@ public class MainGUI {
         //[COM]{ELEMENT} Tab Analyze: reject probability chart
         JFreeChart chart1 = createChart("RejectProbability", "Count", "Probability", null);
         third.add(new ChartPanel(chart1));
-        //[COM]{ELEMENT} Tab Analyze: life time chart
+        //[COM]{ELEMENT} Tab Analyze: lifetime chart
         JFreeChart chart2 = createChart("LifeTime", "Count", "Time", null);
         third.add(new ChartPanel(chart2));
         //[COM]{ELEMENT} Tab Analyze: processors using rate chart
@@ -541,8 +532,9 @@ public class MainGUI {
             ArrayList<Double> processors = getTableLambdas(th2);
             int bufferCapacity = Integer.parseInt(tfh3.getText());
             int requestsCount = Integer.parseInt(tfh4.getText());
-            SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(sources, processors, bufferCapacity,
-                    requestsCount);
+            SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(
+                    sources, processors, bufferCapacity, requestsCount
+            );
             String fileName = debug ? "src/main/resources/config.json" : "config.json";
             try {
                 PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);

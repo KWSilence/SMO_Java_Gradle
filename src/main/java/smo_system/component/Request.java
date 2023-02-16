@@ -1,4 +1,4 @@
-package smo_system;
+package smo_system.component;
 
 public class Request {
     private final int number;

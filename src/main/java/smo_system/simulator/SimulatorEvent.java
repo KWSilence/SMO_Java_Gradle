@@ -1,4 +1,8 @@
-package smo_system;
+package smo_system.simulator;
+
+import smo_system.component.Buffer;
+import smo_system.component.Processor;
+import smo_system.component.Request;
 
 public class SimulatorEvent {
     public enum EventType {
@@ -59,4 +63,3 @@ public class SimulatorEvent {
         this.log = log;
     }
 }
-
