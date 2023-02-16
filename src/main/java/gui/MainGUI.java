@@ -32,15 +32,15 @@ public class MainGUI {
     private final NumberFormat formatter = new DecimalFormat("#0.000");
     private Thread lineMover = null;
     private Runnable task = null;
-    private ArrayList<Simulator> simToAnalyze = new ArrayList<>();
-    private final HashMap<String, Simulator> simulators = new HashMap<>();
+    private ArrayList<SimulatorThread> simToAnalyze = new ArrayList<>();
+    private final HashMap<String, SimulatorThread> simulatorThreads = new HashMap<>();
     private boolean skipState = false;
 
     MainGUI(boolean debug) {
         initConfig(debug ? "src/main/resources/config.json" : "config.json");
 
-        simulators.put("steps", null);
-        simulators.put("auto", null);
+        simulatorThreads.put("steps", null);
+        simulatorThreads.put("auto", null);
 
         JFrame frame = new JFrame("test");
         frame.setLayout(new MigLayout("", "[fill, grow]", "[fill, grow]"));
@@ -93,7 +93,8 @@ public class MainGUI {
                 pbf1.setMaximum(N0);
             } else {
                 N0 = 0;
-                simulators.put("auto", new Simulator(simulationConfig));
+                Simulator simulator = new Simulator(simulationConfig);
+                simulatorThreads.put("auto", new SimulatorThread(simulator, true));
                 pbf1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
             }
 
@@ -106,22 +107,18 @@ public class MainGUI {
                     RequestCountAnalyzer analyzer = new RequestCountAnalyzer(N0, debug);
                     analyzer.analyze();
                     pbf1.setValue(pbf1.getMaximum());
-                    simulators.put("auto", analyzer.getLastSimulator());
+                    simulatorThreads.put("auto", new SimulatorThread(analyzer.getLastSimulator(), null));
                 } else {
-                    Simulator simulator = simulators.get("auto");
-                    simulator.start();
+                    SimulatorThread simulatorThread = simulatorThreads.get("auto");
+                    simulatorThread.start();
                     while (true) {
-                        if (simulator.isInterrupted()) {
-                            return;
-                        }
-                        if (!simulator.isAlive()) {
-                            break;
-                        }
-                        pbf1.setValue(simulator.getProgress());
+                        if (simulatorThread.isInterrupted()) return;
+                        if (!simulatorThread.isAlive()) break;
+                        pbf1.setValue(simulatorThread.getSimulator().getProgress());
                     }
                 }
 
-                Analyzer analyzer = new Analyzer(simulators.get("auto"));
+                Analyzer analyzer = new Analyzer(simulatorThreads.get("auto").getSimulator());
                 analyzer.analyze(true);
                 ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
                 ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
@@ -144,7 +141,7 @@ public class MainGUI {
                     }
                 }
 
-                simulators.put("auto", null);
+                simulatorThreads.put("auto", null);
                 bf2.setEnabled(true);
                 bf1.setEnabled(false);
             });
@@ -153,10 +150,10 @@ public class MainGUI {
         //[COM]{ACTION} Tab Auto: stop button
         bf1.addActionListener(e -> {
             lineMover.interrupt();
-            Simulator simulator = simulators.get("auto");
-            if (simulator != null) {
-                simulator.interrupt();
-                simulators.put("auto", null);
+            SimulatorThread simulatorThread = simulatorThreads.get("auto");
+            if (simulatorThread != null) {
+                simulatorThread.interrupt();
+                simulatorThreads.put("auto", null);
             }
             bf2.setEnabled(true);
             bf1.setEnabled(false);
@@ -202,8 +199,8 @@ public class MainGUI {
                 cbs1.isSelected() ? e.getAdjustable().getMaximum() : e.getAdjustable().getValue()));
         //[COM]{ACTION} Tab Step: start button
         bs2.addActionListener(e -> {
-            Simulator simulator = simulators.get("steps");
-            if (simulator == null) {
+            SimulatorThread simulatorThread = simulatorThreads.get("steps");
+            if (simulatorThread == null) {
                 SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
                         : new SimulationConfig("config.json");
 
@@ -219,14 +216,14 @@ public class MainGUI {
                 pbs1.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
                 pbs1.setValue(0);
 
-                simulators.put("steps", new Simulator(simulationConfig));
-                simulator = simulators.get("steps");
+                simulatorThreads.put("steps", new SimulatorThread(new Simulator(simulationConfig), null));
+                simulatorThread = simulatorThreads.get("steps");
 
                 bs2.setText("Next Step");
                 bs1.setEnabled(true);
                 bs3.setEnabled(true);
 
-                Simulator finalSimulator = simulator;
+                Simulator finalSimulator = simulatorThread.getSimulator();
                 task = () -> {
                     try {
                         boolean canContinue;
@@ -339,7 +336,7 @@ public class MainGUI {
 
                                     tabbedPane.setSelectedIndex(0);
 
-                                    simulators.put("steps", null);
+                                    simulatorThreads.put("steps", null);
                                     bs2.setText("Start Steps");
                                     bs2.setEnabled(true);
                                     bs1.setEnabled(false);
@@ -354,7 +351,9 @@ public class MainGUI {
                 };
             } else {
                 if (skipState) {
-                    new Thread(task).start();
+                    Thread thread = new Thread(task);
+                    simulatorThread.setThread(thread);
+                    thread.start();
                 } else {
                     task.run();
                 }
@@ -362,8 +361,8 @@ public class MainGUI {
         });
         //[COM]{ACTION} Tab Step: stop button
         bs1.addActionListener(e -> {
-            simulators.get("steps").interrupt();
-            simulators.put("steps", null);
+            simulatorThreads.get("steps").interrupt();
+            simulatorThreads.put("steps", null);
             bs2.setText("Start Steps");
             bs2.setEnabled(true);
             bs1.setEnabled(false);
@@ -422,7 +421,7 @@ public class MainGUI {
         bt1.addActionListener(e -> {
             bt2.setEnabled(true);
             bt1.setEnabled(false);
-            for (Simulator simulator : simToAnalyze) {
+            for (SimulatorThread simulator : simToAnalyze) {
                 simulator.interrupt();
             }
             simToAnalyze.clear();
@@ -641,9 +640,8 @@ public class MainGUI {
         }
 
         Thread thread = new Thread(() -> {
-            ArrayList<Simulator> buffer = new ArrayList<>();
-            SimulationConfig.ConfigJSON config = SimulationConfig
-                    .readJSON(debug ? "src/main/resources/config.json" : "config.json");
+            ArrayList<SimulatorThread> buffer = new ArrayList<>();
+            SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(debug ? "src/main/resources/config.json" : "config.json");
             String name = "";
             switch (var) {
                 case 0 -> name = "Source[" + from + ":" + to + "], lambda=" + val;
@@ -684,26 +682,26 @@ public class MainGUI {
                         bufferCapacity = i;
                     }
                 }
-                buffer.add(new Simulator(new SimulationConfig(
-                        new SimulationConfig.ConfigJSON(source, processor, bufferCapacity, config.getRequestsCount()))));
+                SimulationConfig.ConfigJSON configJSON = new SimulationConfig.ConfigJSON(
+                        source, processor, bufferCapacity, config.getRequestsCount()
+                );
+                Simulator tmpSimulator = new Simulator(new SimulationConfig(configJSON));
+                buffer.add(new SimulatorThread(tmpSimulator, true));
                 if (i >= to || buffer.size() >= count) {
-                    if (simToAnalyze == null) {
-                        return;
-                    }
+                    if (simToAnalyze == null) return;
                     simToAnalyze.addAll(buffer);
-                    for (Simulator simulator : buffer) {
+                    for (SimulatorThread simulator : buffer) {
                         simulator.start();
                     }
                     int ind = 1;
-                    for (Simulator simulator : buffer) {
+                    for (SimulatorThread simulatorThread : buffer) {
                         try {
-                            simulator.join();
+                            simulatorThread.join();
                         } catch (Exception e) {
                             return;
                         }
-                        if (simToAnalyze == null) {
-                            return;
-                        }
+                        Simulator simulator = simulatorThread.getSimulator();
+                        if (simToAnalyze == null) return;
                         int index = i - buffer.size() + ind;
                         series0.add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
                                 (double) config.getRequestsCount()));

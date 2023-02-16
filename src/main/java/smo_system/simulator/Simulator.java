@@ -12,7 +12,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
-public class Simulator extends Thread {
+public class Simulator {
     enum SimulationStep {
         INIT, GENERATE, PLACE, RELEASE, PACKAGE, TAKE, END, ANALYZE
     }
@@ -72,11 +72,8 @@ public class Simulator extends Thread {
         return (productionManager.getFullRejectCount() + selectionManager.getFullSuccessCount());
     }
 
-    @Override
-    public void run() {
-        while (!isInterrupted() && nextStep != null) {
-            simulationStep();
-        }
+    public boolean canContinue() {
+        return nextStep != null;
     }
 
     public boolean simulationStep() {
@@ -235,9 +232,8 @@ public class Simulator extends Thread {
     }
 
     public void fullSimulation() {
-        boolean state;
         do {
-            state = simulationStep();
-        } while (state);
+            simulationStep();
+        } while (canContinue());
     }
 }
