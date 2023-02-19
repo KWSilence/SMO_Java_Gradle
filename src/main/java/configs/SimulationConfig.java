@@ -7,8 +7,13 @@ import smo_system.component.Source;
 import smo_system.manager.ProductionManager;
 import smo_system.manager.SelectionManager;
 
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SimulationConfig {
     public static class ConfigJSON {
@@ -76,6 +81,34 @@ public class SimulationConfig {
             e.printStackTrace();
         }
         return new ConfigJSON();
+    }
+
+    public static String getDefaultConfigPath(boolean debug) {
+        return debug ? "src/main/resources/config.json" : "config.json";
+    }
+
+    public static SimulationConfig useDefaultConfigFile(boolean debug) {
+        return new SimulationConfig(getDefaultConfigPath(debug));
+    }
+
+    public static ConfigJSON getDefaultConfigJSON() {
+        ArrayList<Double> defaultSources = new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0));
+        ArrayList<Double> defaultProcessors = new ArrayList<>(Arrays.asList(1.0, 1.0));
+        return new ConfigJSON(defaultSources, defaultProcessors, 3, 1000);
+    }
+
+    public static void initDefaultConfigFile(boolean debug) {
+        File configFile = new File(getDefaultConfigPath(debug));
+        if (!configFile.exists()) {
+            try {
+                PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
+                Gson gson = new Gson();
+                writer.print(gson.toJson(getDefaultConfigJSON()));
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void parseConfig(ConfigJSON config) {
