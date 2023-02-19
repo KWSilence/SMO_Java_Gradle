@@ -2,7 +2,7 @@ package gui;
 
 import smo_system.simulator.Simulator;
 
-class SimulatorThread {
+public class SimulatorThread {
     private final Simulator simulator;
     private Thread thread = null;
 
