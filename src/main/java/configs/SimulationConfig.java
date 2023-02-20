@@ -100,14 +100,18 @@ public class SimulationConfig {
     public static void initDefaultConfigFile(boolean debug) {
         File configFile = new File(getDefaultConfigPath(debug));
         if (!configFile.exists()) {
-            try {
-                PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
-                Gson gson = new Gson();
-                writer.print(gson.toJson(getDefaultConfigJSON()));
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveConfigFile(configFile, getDefaultConfigJSON());
+        }
+    }
+
+    public static void saveConfigFile(File configFile, ConfigJSON config) {
+        try {
+            PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
+            Gson gson = new Gson();
+            writer.print(gson.toJson(config));
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
