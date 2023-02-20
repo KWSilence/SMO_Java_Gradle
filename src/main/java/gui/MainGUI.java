@@ -37,7 +37,7 @@ public class MainGUI {
     private boolean skipState = false;
 
     MainGUI(boolean debug) {
-        initConfig(debug ? "src/main/resources/config.json" : "config.json");
+        SimulationConfig.initDefaultConfigFile(debug);
 
         simulatorThreads.put("steps", null);
         simulatorThreads.put("auto", null);
@@ -79,8 +79,7 @@ public class MainGUI {
         cbf1.addActionListener(e -> tff1.setEnabled(cbf1.isSelected()));
         //[COM]{ACTION} Tab Auto: start button
         bf2.addActionListener(e -> {
-            SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
-                    : new SimulationConfig("config.json");
+            SimulationConfig simulationConfig = SimulationConfig.useDefaultConfigFile(debug);
 
             clearTable(tf1);
             initTableRows(tf1, simulationConfig.getSources().size());
@@ -201,8 +200,7 @@ public class MainGUI {
         bs2.addActionListener(e -> {
             SimulatorThread simulatorThread = simulatorThreads.get("steps");
             if (simulatorThread == null) {
-                SimulationConfig simulationConfig = debug ? new SimulationConfig("src/main/resources/config.json")
-                        : new SimulationConfig("config.json");
+                SimulationConfig simulationConfig = SimulationConfig.useDefaultConfigFile(debug);
 
                 clearTable(ts1);
                 initTableRows(ts1, simulationConfig.getSources().size());
@@ -443,8 +441,7 @@ public class MainGUI {
 
         //[COM]{TAB} Tab Settings
         JPanel fourth = new JPanel(new MigLayout("", "[grow,fill]", "[grow,fill][]"));
-        SimulationConfig.ConfigJSON config = SimulationConfig
-                .readJSON(debug ? "src/main/resources/config.json" : "config.json");
+        SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
         //[COM]{ELEMENT} Tab Settings: sources tab
         JTable th1 = createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
         initTableRows(th1, config.getSources().size());
@@ -509,8 +506,7 @@ public class MainGUI {
         JButton bh3 = new JButton("Refresh");
         //[COM]{ACTION} Tab Settings: refresh button
         bh3.addActionListener(e -> {
-            SimulationConfig.ConfigJSON configRefresh = SimulationConfig
-                    .readJSON(debug ? "src/main/resources/config.json" : "config.json");
+            SimulationConfig.ConfigJSON configRefresh = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
             clearTable(th1);
             initTableRows(th1, configRefresh.getSources().size());
             setTableLambdas(th1, configRefresh.getSources());
@@ -534,15 +530,8 @@ public class MainGUI {
             SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(
                     sources, processors, bufferCapacity, requestsCount
             );
-            String fileName = debug ? "src/main/resources/config.json" : "config.json";
-            try {
-                PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
-                Gson gson = new Gson();
-                writer.print(gson.toJson(configSave));
-                writer.close();
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
+            File configFile = new File(SimulationConfig.getDefaultConfigPath(debug));
+            SimulationConfig.saveConfigFile(configFile, configSave);
         });
         fourth.add(bh4);
         tabbedPane.addTab("settings", fourth);
@@ -730,21 +719,6 @@ public class MainGUI {
             simToAnalyze = null;
         });
         thread.start();
-    }
-
-    private void initConfig(String fileName) {
-        File configFile = new File(fileName);
-        if (!configFile.exists()) {
-            try {
-                PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
-                Gson gson = new Gson();
-                writer.print(gson.toJson(new SimulationConfig.ConfigJSON(new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0)),
-                        new ArrayList<>(Arrays.asList(1.0, 1.0)), 3, 1000)));
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public static void main(String[] args) {
