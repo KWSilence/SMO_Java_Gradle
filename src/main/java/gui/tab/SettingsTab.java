@@ -6,6 +6,7 @@ import gui.TableHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -109,15 +110,8 @@ public class SettingsTab implements TabCreator {
             SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(
                     sources, processors, bufferCapacity, requestsCount
             );
-            String fileName = SimulationConfig.getDefaultConfigPath(debug);
-            try {
-                PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
-                Gson gson = new Gson();
-                writer.print(gson.toJson(configSave));
-                writer.close();
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
+            File configFile = new File(SimulationConfig.getDefaultConfigPath(debug));
+            SimulationConfig.saveConfigFile(configFile, configSave);
         });
         root.add(saveButton);
     }
