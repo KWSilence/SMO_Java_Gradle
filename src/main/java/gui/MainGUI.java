@@ -1,6 +1,5 @@
 package gui;
 
-import com.google.gson.Gson;
 import configs.SimulationConfig;
 import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
@@ -21,12 +20,12 @@ import smo_system.simulator.SimulatorEvent;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public class MainGUI {
     private final NumberFormat formatter = new DecimalFormat("#0.000");
