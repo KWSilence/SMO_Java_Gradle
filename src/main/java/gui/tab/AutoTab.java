@@ -116,10 +116,10 @@ public class AutoTab implements TabCreator {
         });
     }
 
-    private Thread createLineMoverThread(Integer N0, OnProgressChanged onProgressChanged, OnAnalyzeComplete onAnalyzeComplete) {
+    private Thread createLineMoverThread(Integer n0, OnProgressChanged onProgressChanged, OnAnalyzeComplete onAnalyzeComplete) {
         return new Thread(() -> {
-            if (N0 != null) {
-                RequestCountAnalyzer analyzer = new RequestCountAnalyzer(N0, debug);
+            if (n0 != null) {
+                RequestCountAnalyzer analyzer = new RequestCountAnalyzer(n0, debug);
                 analyzer.analyze();
                 onProgressChanged.progressChanged(null);
                 autoSimulatorThread = new SimulatorThread(analyzer.getLastSimulator(), null);
@@ -141,8 +141,8 @@ public class AutoTab implements TabCreator {
 
     public void setResults(Analyzer analyzer, ResultType resultType) {
         if (resultType == null) return;
-        ArrayList<ArrayList<String>> results = null;
-        JTable table = null;
+        ArrayList<ArrayList<String>> results;
+        JTable table;
         switch (resultType) {
             case SOURCES -> {
                 results = analyzer.getSourceResults();
@@ -151,6 +151,10 @@ public class AutoTab implements TabCreator {
             case PROCESSORS -> {
                 results = analyzer.getProcessorResults();
                 table = processorsResultsTable;
+            }
+            default -> {
+                results = null;
+                table = null;
             }
         }
         if (table == null) return;

@@ -16,14 +16,12 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
-// todo refactor
 public class StepTab implements TabCreator {
     public interface OnAnalyzeStart {
         void analyzeStart(Analyzer analyzer);
     }
 
     private final JPanel root;
-    private final boolean debug;
     private SimulatorThread stepSimulationThread = null;
     private Runnable stepTask = null;
     private boolean skipState = false;
@@ -31,7 +29,6 @@ public class StepTab implements TabCreator {
 
     public StepTab(LayoutManager layoutManager, boolean debug, OnAnalyzeStart onAnalyzeStart) {
         this.root = new JPanel(layoutManager);
-        this.debug = debug;
 
         //[COM]{ELEMENT} Tab Step: source table
         JTable sourcesTable = TableHelper.createTable(new String[]{"Source", "Request", "GenerateTime"}, null);

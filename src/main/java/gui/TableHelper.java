@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TableHelper {
+    private TableHelper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static void clearTable(JTable table) {
         String[] s = new String[table.getColumnCount()];
         for (int i = 0; i < table.getColumnCount(); i++) {
@@ -24,6 +28,7 @@ public class TableHelper {
 
     public static JTable createTable(Object[] headers, List<Integer> editableColumns) {
         JTable table = new JTable(new DefaultTableModel(headers, 0)) {
+            @Override
             public boolean isCellEditable(int row, int column) {
                 if (editableColumns != null) {
                     return editableColumns.contains(column);

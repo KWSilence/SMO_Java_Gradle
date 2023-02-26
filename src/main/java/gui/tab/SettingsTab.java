@@ -14,11 +14,9 @@ import java.util.Collections;
 
 public class SettingsTab implements TabCreator {
     private final JPanel root;
-    private final boolean debug;
 
     public SettingsTab(LayoutManager layoutManager, boolean debug) {
         this.root = new JPanel(layoutManager);
-        this.debug = debug;
         SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
         //[COM]{ELEMENT} Tab Settings: sources tab
         JTable sourcesTable = TableHelper.createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));

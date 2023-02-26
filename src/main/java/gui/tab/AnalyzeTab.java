@@ -82,11 +82,7 @@ public class AnalyzeTab implements TabCreator {
         stopButton.addActionListener(e -> {
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
-            for (SimulatorThread simulator : simToAnalyze) {
-                simulator.interrupt();
-            }
-            simToAnalyze.clear();
-            simToAnalyze = null;
+            analyzeThread.interrupt();
         });
         //[COM]{ACTION} Tab Analyze: start button
         startButton.addActionListener(e -> {
@@ -111,10 +107,7 @@ public class AnalyzeTab implements TabCreator {
                     () -> {
                         startButton.setEnabled(true);
                         stopButton.setEnabled(false);
-                        if (simToAnalyze != null) {
-                            simToAnalyze.clear();
-                            simToAnalyze = null;
-                        }
+                        stopAnalyze();
                     }
             );
         });
@@ -172,12 +165,25 @@ public class AnalyzeTab implements TabCreator {
                             simToAnalyze.clear();
                         }
                     }
-                } catch (InterruptedException ignored) {
+                } catch (InterruptedException exception) {
+                    exception.printStackTrace();
+                    Thread.currentThread().interrupt();
+                } finally {
+                    onAnalyzeComplete.analyzeComplete();
                 }
-                onAnalyzeComplete.analyzeComplete();
             }
         };
         analyzeThread.start();
+    }
+
+    private void stopAnalyze() {
+        if (simToAnalyze != null) {
+            for (SimulatorThread simulator : simToAnalyze) {
+                simulator.interrupt();
+            }
+            simToAnalyze.clear();
+            simToAnalyze = null;
+        }
     }
 
     private String getSeriesName(SelectorType selector, int from, int to, double val) {

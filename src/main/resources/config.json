@@ -1,1 +1,1 @@
-{"requestsCount":1000,"bufferCapacity":3,"sources":[1.0,2.0,2.0],"processors":[1.0,2.0]}
+{"requestsCount":100000,"bufferCapacity":3,"sources":[1.0,2.0,2.0],"processors":[1.0,2.0]}
