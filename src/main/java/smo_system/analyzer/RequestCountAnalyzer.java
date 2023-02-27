@@ -3,10 +3,14 @@ package smo_system.analyzer;
 import configs.SimulationConfig;
 import smo_system.simulator.Simulator;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class RequestCountAnalyzer {
     private final boolean debug;
     private int n0;
     private Simulator lastSimulator = null;
+    private static final Logger LOGGER = Logger.getLogger(RequestCountAnalyzer.class.getName());
 
     public RequestCountAnalyzer(int n0, boolean debug) {
         this.n0 = n0;
@@ -36,10 +40,12 @@ public class RequestCountAnalyzer {
             double p1 = (double) sim.getProductionManager().getFullRejectCount() / n0;
 
             if (debug) {
-                System.out.println(
-                        (lastN == 0 ? "\n" : "N0=" + lastN + " p0=" + lastP + " ") + "N1=" + n0 + " p1=" + p1 + "  [abs=" +
-                                Math.abs(lastP - p1) + ", dp0=" + (0.1 * lastP) + "]");
+                String message = (lastN == 0 ? "\n" : "N0=" + lastN + " p0=" + lastP +
+                        " ") + "N1=" + n0 + " p1=" + p1 + "  [abs=" +
+                        Math.abs(lastP - p1) + ", dp0=" + (0.1 * lastP) + "]";
+                LOGGER.log(Level.INFO, message);
             }
+
 
             if (lastP != -1 && Math.abs(lastP - p1) < 0.1 * lastP) {
                 break;

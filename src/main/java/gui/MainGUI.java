@@ -118,22 +118,22 @@ public class MainGUI {
 
                 Analyzer analyzer = new Analyzer(simulatorThreads.get("auto").getSimulator());
                 analyzer.analyze(true);
-                ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
-                ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
+                List<List<String>> sr = analyzer.getSourceResults();
+                List<List<String>> pr = analyzer.getProcessorResults();
                 clearTable(tf1);
                 initTableRows(tf1, sr.size());
                 clearTable(tf2);
                 initTableRows(tf2, pr.size());
 
                 for (int i = 0; i < sr.size(); i++) {
-                    ArrayList<String> el = sr.get(i);
+                    List<String> el = sr.get(i);
                     for (int j = 1; j < el.size(); j++) {
                         tf1.setValueAt(el.get(j), i, j);
                     }
                 }
 
                 for (int i = 0; i < pr.size(); i++) {
-                    ArrayList<String> el = pr.get(i);
+                    List<String> el = pr.get(i);
                     for (int j = 1; j < el.size(); j++) {
                         tf2.setValueAt(el.get(j), i, j);
                     }
@@ -310,22 +310,22 @@ public class MainGUI {
                                     Analyzer analyzer = new Analyzer(finalSimulator);
                                     analyzer.analyze(true);
                                     tps1.append("Simulation was analyzed.");
-                                    ArrayList<ArrayList<String>> sr = analyzer.getSourceResults();
-                                    ArrayList<ArrayList<String>> pr = analyzer.getProcessorResults();
+                                    List<List<String>> sr = analyzer.getSourceResults();
+                                    List<List<String>> pr = analyzer.getProcessorResults();
                                     clearTable(tf1);
                                     initTableRows(tf1, sr.size());
                                     clearTable(tf2);
                                     initTableRows(tf2, pr.size());
 
                                     for (int i = 0; i < sr.size(); i++) {
-                                        ArrayList<String> el = sr.get(i);
+                                        List<String> el = sr.get(i);
                                         for (int j = 1; j < el.size(); j++) {
                                             tf1.setValueAt(el.get(j), i, j);
                                         }
                                     }
 
                                     for (int i = 0; i < pr.size(); i++) {
-                                        ArrayList<String> el = pr.get(i);
+                                        List<String> el = pr.get(i);
                                         for (int j = 1; j < el.size(); j++) {
                                             tf2.setValueAt(el.get(j), i, j);
                                         }
@@ -607,7 +607,7 @@ public class MainGUI {
         }
     }
 
-    private void setTableLambdas(JTable table, ArrayList<Double> lambdas) {
+    private void setTableLambdas(JTable table, List<Double> lambdas) {
         for (int i = 0; i < lambdas.size(); i++) {
             table.setValueAt(lambdas.get(i), i, 1);
         }
@@ -694,7 +694,7 @@ public class MainGUI {
                         series0.add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
                                 (double) config.getRequestsCount()));
                         double time = 0;
-                        for (ArrayList<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
+                        for (List<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
                             time += requests.stream().mapToDouble(Request::getLifeTime).sum();
                         }
                         series1.add(index, time / simulator.getSelectionManager().getFullSuccessCount());

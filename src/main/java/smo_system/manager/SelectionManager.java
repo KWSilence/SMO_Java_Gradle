@@ -5,16 +5,17 @@ import smo_system.component.Processor;
 import smo_system.component.Request;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SelectionManager {
-    private final ArrayList<Processor> processors;
-    private final ArrayList<ArrayList<Request>> successRequests;
+    private final List<Processor> processors;
+    private final List<List<Request>> successRequests;
     private final Buffer buffer;
     private Processor takeProcessor;
     private Processor freeProcessor;
     private Request lastRequest;
 
-    public SelectionManager(ArrayList<Processor> processors, Buffer buffer, int sourceCount) {
+    public SelectionManager(List<Processor> processors, Buffer buffer, int sourceCount) {
         this.processors = processors;
         this.takeProcessor = null;
         this.freeProcessor = null;
@@ -25,11 +26,11 @@ public class SelectionManager {
         }
     }
 
-    public ArrayList<Processor> getProcessors() {
+    public List<Processor> getProcessors() {
         return processors;
     }
 
-    public ArrayList<ArrayList<Request>> getSuccessRequests() {
+    public List<List<Request>> getSuccessRequests() {
         return successRequests;
     }
 
@@ -59,7 +60,7 @@ public class SelectionManager {
 
     public int getFullSuccessCount() {
         int counter = 0;
-        for (ArrayList<Request> ar : successRequests) {
+        for (List<Request> ar : successRequests) {
             counter += ar.size();
         }
         return counter;

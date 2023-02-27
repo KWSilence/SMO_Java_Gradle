@@ -1,6 +1,7 @@
 package smo_system.component;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Buffer {
     private final int capacity;
@@ -31,11 +32,11 @@ public class Buffer {
         return list.size();
     }
 
-    public ArrayList<Request> getList() {
+    public List<Request> getList() {
         return list;
     }
 
-    public ArrayList<Request> getRequestsPackage() {
+    public List<Request> getRequestsPackage() {
         return requestsPackage;
     }
 

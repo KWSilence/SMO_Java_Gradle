@@ -5,17 +5,18 @@ import smo_system.component.Request;
 import smo_system.component.Source;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ProductionManager {
-    private final ArrayList<Source> sources;
+    private final List<Source> sources;
     private Source currentSource;
     private final int maxRequestCount;
     private final Buffer buffer;
     private int currentRequestCount;
-    private final ArrayList<ArrayList<Request>> rejectedRequests;
+    private final List<List<Request>> rejectedRequests;
     private Request lastRequest;
 
-    public ProductionManager(ArrayList<Source> sources, Buffer buffer, int maxRequestCount) {
+    public ProductionManager(List<Source> sources, Buffer buffer, int maxRequestCount) {
         this.sources = sources;
         this.buffer = buffer;
         this.currentSource = null;
@@ -28,11 +29,11 @@ public class ProductionManager {
         }
     }
 
-    public ArrayList<Source> getSources() {
+    public List<Source> getSources() {
         return sources;
     }
 
-    public ArrayList<ArrayList<Request>> getRejectedRequests() {
+    public List<List<Request>> getRejectedRequests() {
         return rejectedRequests;
     }
 
@@ -58,7 +59,7 @@ public class ProductionManager {
 
     public int getFullRejectCount() {
         int counter = 0;
-        for (ArrayList<Request> ar : rejectedRequests) {
+        for (List<Request> ar : rejectedRequests) {
             counter += ar.size();
         }
         return counter;

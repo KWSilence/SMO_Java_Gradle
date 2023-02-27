@@ -14,13 +14,14 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class SimulationConfig {
     public static class ConfigJSON {
         private final int requestsCount;
         private final int bufferCapacity;
-        private final ArrayList<Double> sources;
-        private final ArrayList<Double> processors;
+        private final List<Double> sources;
+        private final List<Double> processors;
 
         ConfigJSON() {
             sources = null;
@@ -29,18 +30,18 @@ public class SimulationConfig {
             requestsCount = 0;
         }
 
-        public ConfigJSON(ArrayList<Double> sources, ArrayList<Double> processors, int bufferCapacity, int requestsCount) {
+        public ConfigJSON(List<Double> sources, List<Double> processors, int bufferCapacity, int requestsCount) {
             this.sources = sources;
             this.bufferCapacity = bufferCapacity;
             this.processors = processors;
             this.requestsCount = requestsCount;
         }
 
-        public ArrayList<Double> getSources() {
+        public List<Double> getSources() {
             return sources;
         }
 
-        public ArrayList<Double> getProcessors() {
+        public List<Double> getProcessors() {
             return processors;
         }
 
@@ -130,11 +131,11 @@ public class SimulationConfig {
         this.selectionManager = new SelectionManager(processors, buffer, sources.size());
     }
 
-    public ArrayList<Source> getSources() {
+    public List<Source> getSources() {
         return sources;
     }
 
-    public ArrayList<Processor> getProcessors() {
+    public List<Processor> getProcessors() {
         return processors;
     }
 
