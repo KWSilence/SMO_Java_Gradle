@@ -77,144 +77,64 @@ public class Simulator {
     }
 
     public boolean simulationStep() {
-        if (nextStep == null) return false;
-
+        if (nextStep == null) {
+            return false;
+        }
         if (nextStep == SimulationStep.INIT) {
             nextStep = SimulationStep.GENERATE;
         }
-
         if (nextStep == SimulationStep.GENERATE) {
             productionManager.selectNearestEvent();
             selectionManager.selectNearestFreeEvent();
             if (productionManager.canGenerate() &&
                     ((selectionManager.canFree() && productionManager.getTime() < selectionManager.getFreeTime()) ||
                             !selectionManager.canFree())) {
-                productionManager.generate();
-                Request request = productionManager.getLastRequest();
-
-                //sGenerate
-                lastEvent.setType(SimulatorEvent.EventType.GENERATE);
-                lastEvent.setRequest(request);
-                lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " was generated in " +
-                        formatter.format(request.getTime()) + " [" + productionManager.getCurrentRequestCount() +
-                        "/" + productionManager.getMaxRequestCount() + "]\n");
-
-                lastRequest = request;
+                processGenerate();
                 nextStep = SimulationStep.PLACE;
                 return true;
             }
-
             nextStep = SimulationStep.RELEASE;
         }
-
         if (nextStep == SimulationStep.PLACE) {
-            Request request = lastRequest;
-
-            boolean successPutToBuffer = productionManager.putToBuffer();
-            boolean successTake = selectionManager.putToProcessor();
-            if (successPutToBuffer) {
-                if (successTake) {
-                    //sTake
-                    Processor takeProc = selectionManager.getTakeProcessor();
-                    lastEvent.setType(SimulatorEvent.EventType.TAKE);
-                    lastEvent.setRequest(request);
-                    lastEvent.setProcessor(takeProc);
-                    lastEvent.setBuffer(null);
-                    lastEvent.setLog(
-                            "Processor #" + takeProc.getNumber() + " take Request #" + request.getSourceNumber() + "." +
-                                    request.getNumber() + " in " + formatter.format(request.getTime() + request.getTimeInBuffer()) + "\n");
-                } else {
-                    //sBuffer
-                    lastEvent.setType(SimulatorEvent.EventType.BUFFER);
-                    lastEvent.setRequest(request);
-                    lastEvent.setBuffer(buffer);
-                    lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " put to Buffer " +
-                            buffer.getSize() + "/" + buffer.getCapacity() + "\n");
-                }
-            } else {
-                //sReject
-                lastEvent.setType(SimulatorEvent.EventType.REJECT);
-                lastEvent.setRequest(request);
-                lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " was rejected\n");
-            }
-
-            lastRequest = null;
+            processPlace();
             nextStep = SimulationStep.PACKAGE;
             return true;
         }
-
         if (nextStep == SimulationStep.RELEASE) {
             if (selectionManager.canFree()) {
-                endTime = selectionManager.freeProcessor();
-
-                //sRelease
-                Request request = selectionManager.getLastRequest();
-                Processor processor = selectionManager.getFreeProcessor();
-                lastEvent.setType(SimulatorEvent.EventType.RELEASE);
-                lastEvent.setRequest(request);
-                lastEvent.setProcessor(processor);
-                lastEvent.setLog(
-                        "Processor #" + processor.getNumber() + " release Request #" + request.getSourceNumber() + "." +
-                                request.getNumber() + " in " + formatter.format(processor.getProcessTime()) + "\n");
-
+                processRelease();
                 nextStep = SimulationStep.PACKAGE;
                 return true;
             }
-
             nextStep = SimulationStep.END;
             return true;
         }
-
         if (nextStep == SimulationStep.END) {
             lastEvent.setType(SimulatorEvent.EventType.WORK_END);
             lastEvent.setLog("Simulation complete.\nYou can create Result Table. Press 'Next Step'\n");
-
             nextStep = SimulationStep.ANALYZE;
             return true;
         }
-
         if (nextStep == SimulationStep.ANALYZE) {
             lastEvent.setType(SimulatorEvent.EventType.ANALYZE);
-
             nextStep = null;
             return false;
         }
 
         if (nextStep == SimulationStep.PACKAGE) {
             selectionManager.selectNearestWorkEvent();
-            //sPackage
             if (buffer.getRequestsPackage().isEmpty() && selectionManager.canTake()) {
-                buffer.createPackage();
-                lastEvent.setType(SimulatorEvent.EventType.PACKAGE);
-                lastEvent.setBuffer(buffer);
-                StringBuilder s = new StringBuilder();
-                for (Request r : buffer.getRequestsPackage()) {
-                    s.append(r.getSourceNumber()).append(".").append(r.getNumber()).append(", ");
-                }
-                lastEvent.setLog("Create Package: " + s + "\n");
-
+                processPackage();
                 nextStep = SimulationStep.TAKE;
                 return true;
             }
-
             nextStep = SimulationStep.TAKE;
         }
 
         if (nextStep == SimulationStep.TAKE) {
             boolean successTake = selectionManager.putToProcessor();
             if (successTake) {
-                //sTake
-                Processor takeProc = selectionManager.getTakeProcessor();
-                Request request = takeProc.getRequest();
-                lastEvent.setType(SimulatorEvent.EventType.TAKE);
-                lastEvent.setRequest(request);
-                lastEvent.setProcessor(takeProc);
-                lastEvent.setBuffer(buffer);
-                lastEvent.setLog("Processor #" + takeProc.getNumber() + " take Request #" + request.getSourceNumber() + "." +
-                        request.getNumber() + " in " +
-                        formatter.format(request.getTime() + request.getTimeInBuffer()) + " from Buffer(" +
-                        buffer.getTakeIndex() + ")\n");
-
+                processTake();
                 nextStep = SimulationStep.GENERATE;
                 return true;
             }
@@ -223,12 +143,98 @@ public class Simulator {
             nextIteration = true;
             nextStep = SimulationStep.GENERATE;
             boolean state = simulationStep();
-            if (nextStep != null) nextIteration = false;
+            if (state) nextIteration = false;
             return state;
         } else {
             nextStep = null;
             return false;
         }
+    }
+
+    private void processGenerate() {
+        productionManager.generate();
+        Request request = productionManager.getLastRequest();
+
+        //sGenerate
+        lastEvent.setType(SimulatorEvent.EventType.GENERATE);
+        lastEvent.setRequest(request);
+        lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " was generated in " +
+                formatter.format(request.getTime()) + " [" + productionManager.getCurrentRequestCount() +
+                "/" + productionManager.getMaxRequestCount() + "]\n");
+
+        lastRequest = request;
+    }
+
+    private void processPlace() {
+        Request request = lastRequest;
+        boolean successPutToBuffer = productionManager.putToBuffer();
+        boolean successTake = selectionManager.putToProcessor();
+        if (successPutToBuffer) {
+            if (successTake) {
+                //sTake
+                Processor takeProc = selectionManager.getTakeProcessor();
+                lastEvent.setType(SimulatorEvent.EventType.TAKE);
+                lastEvent.setRequest(request);
+                lastEvent.setProcessor(takeProc);
+                lastEvent.setBuffer(null);
+                lastEvent.setLog(
+                        "Processor #" + takeProc.getNumber() + " take Request #" + request.getSourceNumber() + "." +
+                                request.getNumber() + " in " + formatter.format(request.getTime() + request.getTimeInBuffer()) + "\n");
+            } else {
+                //sBuffer
+                lastEvent.setType(SimulatorEvent.EventType.BUFFER);
+                lastEvent.setRequest(request);
+                lastEvent.setBuffer(buffer);
+                lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " put to Buffer " +
+                        buffer.getSize() + "/" + buffer.getCapacity() + "\n");
+            }
+        } else {
+            //sReject
+            lastEvent.setType(SimulatorEvent.EventType.REJECT);
+            lastEvent.setRequest(request);
+            lastEvent.setLog("Request #" + request.getSourceNumber() + "." + request.getNumber() + " was rejected\n");
+        }
+
+        lastRequest = null;
+    }
+
+    private void processRelease() {
+        endTime = selectionManager.freeProcessor();
+
+        //sRelease
+        Request request = selectionManager.getLastRequest();
+        Processor processor = selectionManager.getFreeProcessor();
+        lastEvent.setType(SimulatorEvent.EventType.RELEASE);
+        lastEvent.setRequest(request);
+        lastEvent.setProcessor(processor);
+        lastEvent.setLog(
+                "Processor #" + processor.getNumber() + " release Request #" + request.getSourceNumber() + "." +
+                        request.getNumber() + " in " + formatter.format(processor.getProcessTime()) + "\n");
+    }
+
+    private void processTake() {
+        //sTake
+        Processor takeProc = selectionManager.getTakeProcessor();
+        Request request = takeProc.getRequest();
+        lastEvent.setType(SimulatorEvent.EventType.TAKE);
+        lastEvent.setRequest(request);
+        lastEvent.setProcessor(takeProc);
+        lastEvent.setBuffer(buffer);
+        lastEvent.setLog("Processor #" + takeProc.getNumber() + " take Request #" + request.getSourceNumber() + "." +
+                request.getNumber() + " in " +
+                formatter.format(request.getTime() + request.getTimeInBuffer()) + " from Buffer(" +
+                buffer.getTakeIndex() + ")\n");
+    }
+
+    private void processPackage() {
+        buffer.createPackage();
+        lastEvent.setType(SimulatorEvent.EventType.PACKAGE);
+        lastEvent.setBuffer(buffer);
+        StringBuilder s = new StringBuilder();
+        for (Request r : buffer.getRequestsPackage()) {
+            s.append(r.getSourceNumber()).append(".").append(r.getNumber()).append(", ");
+        }
+        lastEvent.setLog("Create Package: " + s + "\n");
     }
 
     public void fullSimulation() {

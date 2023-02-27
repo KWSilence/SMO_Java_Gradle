@@ -5,11 +5,11 @@ import smo_system.simulator.Simulator;
 
 public class RequestCountAnalyzer {
     private final boolean debug;
-    private int N0;
+    private int n0;
     private Simulator lastSimulator = null;
 
-    public RequestCountAnalyzer(int N0, boolean debug) {
-        this.N0 = N0;
+    public RequestCountAnalyzer(int n0, boolean debug) {
+        this.n0 = n0;
         this.debug = debug;
     }
 
@@ -26,32 +26,30 @@ public class RequestCountAnalyzer {
         int lastN = 0;
         while (true) {
             if (lastP > 0) {
-                N0 = (int) Math.round(Ta * Ta * (1 - lastP) / (lastP * d * d));
+                n0 = (int) Math.round(Ta * Ta * (1 - lastP) / (lastP * d * d));
             }
 
             SimulationConfig conf = new SimulationConfig(defaultConfig.getConfig());
-            Simulator sim = new Simulator(conf.getSources(), conf.getBuffer(), conf.getProcessors(), N0);
+            Simulator sim = new Simulator(conf.getSources(), conf.getBuffer(), conf.getProcessors(), n0);
             sim.fullSimulation();
 
-            double p1 = (double) sim.getProductionManager().getFullRejectCount() / (double) N0;
+            double p1 = (double) sim.getProductionManager().getFullRejectCount() / n0;
 
             if (debug) {
                 System.out.println(
-                        (lastN == 0 ? "\n" : "N0=" + lastN + " p0=" + lastP + " ") + "N1=" + N0 + " p1=" + p1 + "  [abs=" +
+                        (lastN == 0 ? "\n" : "N0=" + lastN + " p0=" + lastP + " ") + "N1=" + n0 + " p1=" + p1 + "  [abs=" +
                                 Math.abs(lastP - p1) + ", dp0=" + (0.1 * lastP) + "]");
-            }
-
-            if (p1 == 0 || p1 == 1) {
-                lastSimulator = sim;
-                break;
             }
 
             if (lastP != -1 && Math.abs(lastP - p1) < 0.1 * lastP) {
                 break;
             }
             lastSimulator = sim;
+            if (p1 == 0 || p1 == 1) {
+                break;
+            }
             lastP = p1;
-            lastN = N0;
+            lastN = n0;
         }
     }
 }

@@ -65,7 +65,7 @@ public class ProductionManager {
     }
 
     public void generate() {
-        lastRequest = currentSource.getRequest();
+        lastRequest = currentSource.getNewRequest();
         currentRequestCount++;
     }
 

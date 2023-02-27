@@ -25,7 +25,7 @@ public class Source {
         return number;
     }
 
-    public Request getRequest() {
+    public Request getNewRequest() {
         requestCount++;
         generateRequest();
         return lastRequest;

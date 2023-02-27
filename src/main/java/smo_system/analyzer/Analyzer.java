@@ -67,7 +67,7 @@ public class Analyzer {
         SelectionManager sm = simulator.getSelectionManager();
         ArrayList<ArrayList<Request>> success = sm.getSuccessRequests();
         for (Source s : sources) {
-            AnalyzerResults r = new AnalyzerResults(true);
+            AnalyzerResults r = new AnalyzerResults();
             r.number = s.getNumber();
             r.requestCount = s.getRequestCount();
             r.rejectProbability = ((double) rejected.get(r.number).size()) / ((double) r.requestCount);
@@ -86,7 +86,7 @@ public class Analyzer {
         double endTime = simulator.getEndTime();
 
         for (Processor p : processors) {
-            AnalyzerResults r = new AnalyzerResults(false);
+            AnalyzerResults r = new AnalyzerResults();
             r.number = p.getNumber();
             r.usageRate = p.getWorkTime() / endTime;
             processorsResult.add(r);

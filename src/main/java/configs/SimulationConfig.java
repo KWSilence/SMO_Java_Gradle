@@ -58,7 +58,7 @@ public class SimulationConfig {
     private Buffer buffer;
     private ProductionManager productionManager;
     private SelectionManager selectionManager;
-    private ConfigJSON config;
+    private final ConfigJSON config;
 
     public SimulationConfig(String fileName) {
         this.config = readJSON(fileName);
@@ -66,6 +66,7 @@ public class SimulationConfig {
     }
 
     public SimulationConfig(ConfigJSON config) {
+        this.config = config;
         parseConfig(config);
     }
 
