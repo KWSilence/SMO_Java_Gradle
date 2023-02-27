@@ -1,12 +1,14 @@
 package smo_system.component;
 
+import smo_system.util.TakeUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Buffer {
     private final int capacity;
-    private final ArrayList<Request> list;
-    private final ArrayList<Request> requestsPackage;
+    private final List<Request> list;
+    private final List<Request> requestsPackage;
     private int takeIndex;
 
     public Buffer(int capacity) {
@@ -14,6 +16,14 @@ public class Buffer {
         this.list = new ArrayList<>();
         this.requestsPackage = new ArrayList<>();
         this.takeIndex = 0;
+    }
+
+
+    public Buffer(Buffer buffer) {
+        this.capacity = buffer.capacity;
+        this.list = buffer.list.stream().map(r -> TakeUtil.transformOrNull(r, Request::new)).toList();
+        this.requestsPackage = buffer.requestsPackage.stream().map(r -> TakeUtil.transformOrNull(r, Request::new)).toList();
+        this.takeIndex = buffer.takeIndex;
     }
 
     public boolean isEmpty() {

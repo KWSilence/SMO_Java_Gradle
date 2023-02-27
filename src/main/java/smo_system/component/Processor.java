@@ -1,5 +1,7 @@
 package smo_system.component;
 
+import smo_system.util.TakeUtil;
+
 public class Processor {
     private final int number;
     private Request currentRequest;
@@ -15,6 +17,15 @@ public class Processor {
         this.processTime = 0;
         this.currentRequest = null;
         this.wait = true;
+    }
+
+    public Processor(Processor processor) {
+        this.number = processor.number;
+        this.lambda = processor.lambda;
+        this.workTime = processor.workTime;
+        this.processTime = processor.processTime;
+        this.currentRequest = TakeUtil.transformOrNull(processor.currentRequest, Request::new);
+        this.wait = processor.wait;
     }
 
     public int getNumber() {

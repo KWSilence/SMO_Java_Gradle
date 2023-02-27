@@ -8,10 +8,12 @@ import smo_system.manager.ProductionManager;
 import smo_system.manager.SelectionManager;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,25 +26,25 @@ public class SimulationConfig {
         private final List<Double> processors;
 
         ConfigJSON() {
-            sources = null;
             bufferCapacity = 0;
-            processors = null;
             requestsCount = 0;
+            sources = new ArrayList<>();
+            processors = new ArrayList<>();
         }
 
         public ConfigJSON(List<Double> sources, List<Double> processors, int bufferCapacity, int requestsCount) {
-            this.sources = sources;
             this.bufferCapacity = bufferCapacity;
-            this.processors = processors;
             this.requestsCount = requestsCount;
+            this.sources = new ArrayList<>(sources);
+            this.processors = new ArrayList<>(processors);
         }
 
         public List<Double> getSources() {
-            return sources;
+            return new ArrayList<>(sources);
         }
 
         public List<Double> getProcessors() {
-            return processors;
+            return new ArrayList<>(processors);
         }
 
         public int getBufferCapacity() {
@@ -78,7 +80,10 @@ public class SimulationConfig {
     public static ConfigJSON readJSON(String fileName) {
         Gson gson = new Gson();
         try {
-            return gson.fromJson(new FileReader(fileName), ConfigJSON.class);
+            Path path = Path.of(fileName);
+            Charset charset = StandardCharsets.UTF_8;
+            String json = Files.readString(path, charset);
+            return gson.fromJson(json, ConfigJSON.class);
         } catch (Exception e) {
             e.printStackTrace();
         }

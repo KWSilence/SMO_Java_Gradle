@@ -3,6 +3,7 @@ package smo_system.simulator;
 import smo_system.component.Buffer;
 import smo_system.component.Processor;
 import smo_system.component.Request;
+import smo_system.util.TakeUtil;
 
 public class SimulatorEvent {
     public enum EventType {
@@ -32,27 +33,27 @@ public class SimulatorEvent {
     }
 
     public Request getRequest() {
-        return request;
+        return TakeUtil.transformOrNull(request, Request::new);
     }
 
     public void setRequest(Request request) {
-        this.request = request;
+        this.request = TakeUtil.transformOrNull(request, Request::new);
     }
 
     public Processor getProcessor() {
-        return processor;
+        return TakeUtil.transformOrNull(processor, Processor::new);
     }
 
     public void setProcessor(Processor processor) {
-        this.processor = processor;
+        this.processor = TakeUtil.transformOrNull(processor, Processor::new);
     }
 
     public Buffer getBuffer() {
-        return buffer;
+        return TakeUtil.transformOrNull(buffer, Buffer::new);
     }
 
     public void setBuffer(Buffer buffer) {
-        this.buffer = buffer;
+        this.buffer = TakeUtil.transformOrNull(buffer, Buffer::new);
     }
 
     public String getLog() {
