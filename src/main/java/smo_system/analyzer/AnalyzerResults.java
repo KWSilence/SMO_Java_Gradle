@@ -1,7 +1,6 @@
 package smo_system.analyzer;
 
 public class AnalyzerResults {
-    boolean isSource;
     int number = 0;
 
     int requestCount = 0;
@@ -13,8 +12,4 @@ public class AnalyzerResults {
     double processTimeDispersion = 0;
 
     double usageRate = 0;
-
-    AnalyzerResults(boolean isSource) {
-        this.isSource = isSource;
-    }
 }

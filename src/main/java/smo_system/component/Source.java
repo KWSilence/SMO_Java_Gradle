@@ -1,5 +1,7 @@
 package smo_system.component;
 
+import smo_system.util.TakeUtil;
+
 import java.util.Random;
 
 public class Source {
@@ -21,11 +23,20 @@ public class Source {
         generateRequest();
     }
 
+    public Source(Source source) {
+        this.number = source.number;
+        this.lambda = source.lambda;
+        this.lastRequest = TakeUtil.transformOrNull(source.lastRequest, Request::new);
+        this.currentRequest = TakeUtil.transformOrNull(source.currentRequest, Request::new);
+        this.requestCount = source.requestCount;
+        this.random = source.random;
+    }
+
     public int getNumber() {
         return number;
     }
 
-    public Request getRequest() {
+    public Request getNewRequest() {
         requestCount++;
         generateRequest();
         return lastRequest;

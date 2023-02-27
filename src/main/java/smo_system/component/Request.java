@@ -8,12 +8,20 @@ public class Request {
     private double timeInBuffer;
     private double timeInProcessor;
 
-    Request(int number, int sourceNumber, double creationTime) {
+    public Request(int number, int sourceNumber, double creationTime) {
         this.number = number;
         this.sourceNumber = sourceNumber;
         this.creationTime = creationTime;
         this.timeInBuffer = 0;
         this.timeInProcessor = 0;
+    }
+
+    public Request(Request request) {
+        this.number = request.number;
+        this.sourceNumber = request.sourceNumber;
+        this.creationTime = request.creationTime;
+        this.timeInBuffer = request.timeInBuffer;
+        this.timeInProcessor = request.timeInProcessor;
     }
 
     public int getNumber() {

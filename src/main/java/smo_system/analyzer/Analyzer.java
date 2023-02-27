@@ -10,6 +10,7 @@ import smo_system.simulator.Simulator;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Analyzer {
     private final Simulator simulator;
@@ -32,42 +33,42 @@ public class Analyzer {
         analyzeProcessors();
     }
 
-    public ArrayList<ArrayList<String>> getSourceResults() {
-        ArrayList<ArrayList<String>> ar = new ArrayList<>();
-        for (AnalyzerResults r : sourcesResult) {
-            ArrayList<String> s = new ArrayList<>();
-            s.add(String.valueOf(r.number));
-            s.add(String.valueOf(r.requestCount));
-            s.add(formatter.format(r.rejectProbability));
-            s.add(formatter.format(r.lifeTime));
-            s.add(formatter.format(r.bufferTime));
-            s.add(formatter.format(r.processTime));
-            s.add(formatter.format(r.bufferTimeDispersion));
-            s.add(formatter.format(r.processTimeDispersion));
-            ar.add(s);
+    public List<List<String>> getSourceResults() {
+        List<List<String>> sourceResultsTable = new ArrayList<>();
+        for (AnalyzerResults result : sourcesResult) {
+            List<String> sourceResultsRow = new ArrayList<>();
+            sourceResultsRow.add(String.valueOf(result.number));
+            sourceResultsRow.add(String.valueOf(result.requestCount));
+            sourceResultsRow.add(formatter.format(result.rejectProbability));
+            sourceResultsRow.add(formatter.format(result.lifeTime));
+            sourceResultsRow.add(formatter.format(result.bufferTime));
+            sourceResultsRow.add(formatter.format(result.processTime));
+            sourceResultsRow.add(formatter.format(result.bufferTimeDispersion));
+            sourceResultsRow.add(formatter.format(result.processTimeDispersion));
+            sourceResultsTable.add(sourceResultsRow);
         }
-        return ar;
+        return sourceResultsTable;
     }
 
-    public ArrayList<ArrayList<String>> getProcessorResults() {
-        ArrayList<ArrayList<String>> ar = new ArrayList<>();
-        for (AnalyzerResults r : processorsResult) {
-            ArrayList<String> s = new ArrayList<>();
-            s.add(String.valueOf(r.number));
-            s.add(formatter.format(r.usageRate));
-            ar.add(s);
+    public List<List<String>> getProcessorResults() {
+        List<List<String>> processorResultsTable = new ArrayList<>();
+        for (AnalyzerResults result : processorsResult) {
+            List<String> processorResultsRow = new ArrayList<>();
+            processorResultsRow.add(String.valueOf(result.number));
+            processorResultsRow.add(formatter.format(result.usageRate));
+            processorResultsTable.add(processorResultsRow);
         }
-        return ar;
+        return processorResultsTable;
     }
 
     private void analyzeSources() {
         ProductionManager pm = simulator.getProductionManager();
-        ArrayList<Source> sources = pm.getSources();
-        ArrayList<ArrayList<Request>> rejected = pm.getRejectedRequests();
+        List<Source> sources = pm.getSources();
+        List<List<Request>> rejected = pm.getRejectedRequests();
         SelectionManager sm = simulator.getSelectionManager();
-        ArrayList<ArrayList<Request>> success = sm.getSuccessRequests();
+        List<List<Request>> success = sm.getSuccessRequests();
         for (Source s : sources) {
-            AnalyzerResults r = new AnalyzerResults(true);
+            AnalyzerResults r = new AnalyzerResults();
             r.number = s.getNumber();
             r.requestCount = s.getRequestCount();
             r.rejectProbability = ((double) rejected.get(r.number).size()) / ((double) r.requestCount);
@@ -82,11 +83,11 @@ public class Analyzer {
 
     private void analyzeProcessors() {
         SelectionManager sm = simulator.getSelectionManager();
-        ArrayList<Processor> processors = sm.getProcessors();
+        List<Processor> processors = sm.getProcessors();
         double endTime = simulator.getEndTime();
 
         for (Processor p : processors) {
-            AnalyzerResults r = new AnalyzerResults(false);
+            AnalyzerResults r = new AnalyzerResults();
             r.number = p.getNumber();
             r.usageRate = p.getWorkTime() / endTime;
             processorsResult.add(r);

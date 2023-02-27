@@ -19,7 +19,7 @@ public class SimulatorThread {
                 public void run() {
                     do {
                         simulator.simulationStep();
-                    } while (!isInterrupted() && simulator.canContinue());
+                    } while (!super.isInterrupted() && simulator.canContinue());
                 }
             };
         }

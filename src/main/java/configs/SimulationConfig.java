@@ -8,40 +8,43 @@ import smo_system.manager.ProductionManager;
 import smo_system.manager.SelectionManager;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class SimulationConfig {
     public static class ConfigJSON {
         private final int requestsCount;
         private final int bufferCapacity;
-        private final ArrayList<Double> sources;
-        private final ArrayList<Double> processors;
+        private final List<Double> sources;
+        private final List<Double> processors;
 
         ConfigJSON() {
-            sources = null;
             bufferCapacity = 0;
-            processors = null;
             requestsCount = 0;
+            sources = new ArrayList<>();
+            processors = new ArrayList<>();
         }
 
-        public ConfigJSON(ArrayList<Double> sources, ArrayList<Double> processors, int bufferCapacity, int requestsCount) {
-            this.sources = sources;
+        public ConfigJSON(List<Double> sources, List<Double> processors, int bufferCapacity, int requestsCount) {
             this.bufferCapacity = bufferCapacity;
-            this.processors = processors;
             this.requestsCount = requestsCount;
+            this.sources = new ArrayList<>(sources);
+            this.processors = new ArrayList<>(processors);
         }
 
-        public ArrayList<Double> getSources() {
-            return sources;
+        public List<Double> getSources() {
+            return new ArrayList<>(sources);
         }
 
-        public ArrayList<Double> getProcessors() {
-            return processors;
+        public List<Double> getProcessors() {
+            return new ArrayList<>(processors);
         }
 
         public int getBufferCapacity() {
@@ -58,7 +61,7 @@ public class SimulationConfig {
     private Buffer buffer;
     private ProductionManager productionManager;
     private SelectionManager selectionManager;
-    private ConfigJSON config;
+    private final ConfigJSON config;
 
     public SimulationConfig(String fileName) {
         this.config = readJSON(fileName);
@@ -66,6 +69,7 @@ public class SimulationConfig {
     }
 
     public SimulationConfig(ConfigJSON config) {
+        this.config = config;
         parseConfig(config);
     }
 
@@ -76,7 +80,10 @@ public class SimulationConfig {
     public static ConfigJSON readJSON(String fileName) {
         Gson gson = new Gson();
         try {
-            return gson.fromJson(new FileReader(fileName), ConfigJSON.class);
+            Path path = Path.of(fileName);
+            Charset charset = StandardCharsets.UTF_8;
+            String json = Files.readString(path, charset);
+            return gson.fromJson(json, ConfigJSON.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -129,11 +136,11 @@ public class SimulationConfig {
         this.selectionManager = new SelectionManager(processors, buffer, sources.size());
     }
 
-    public ArrayList<Source> getSources() {
+    public List<Source> getSources() {
         return sources;
     }
 
-    public ArrayList<Processor> getProcessors() {
+    public List<Processor> getProcessors() {
         return processors;
     }
 
