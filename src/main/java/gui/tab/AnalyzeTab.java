@@ -16,6 +16,7 @@ import smo_system.simulator.Simulator;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AnalyzeTab implements TabCreator {
     private enum SelectorType {
@@ -138,8 +139,8 @@ public class AnalyzeTab implements TabCreator {
                 try {
                     for (int i = from; i <= to; i++) {
                         checkInterruption();
-                        ArrayList<Double> sources = getSources(selector, i, config, val);
-                        ArrayList<Double> processors = getProcessors(selector, i, config, val);
+                        List<Double> sources = getSources(selector, i, config, val);
+                        List<Double> processors = getProcessors(selector, i, config, val);
                         int bufferCapacity = getBufferCapacity(selector, i, config);
                         SimulationConfig.ConfigJSON configJSON = new SimulationConfig.ConfigJSON(
                                 sources, processors, bufferCapacity, config.getRequestsCount()
@@ -201,7 +202,7 @@ public class AnalyzeTab implements TabCreator {
         series[0].add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
                 (double) requestCount));
         double time = 0;
-        for (ArrayList<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
+        for (List<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
             time += requests.stream().mapToDouble(Request::getLifeTime).sum();
         }
         series[1].add(index, time / simulator.getSelectionManager().getFullSuccessCount());
@@ -212,7 +213,7 @@ public class AnalyzeTab implements TabCreator {
         series[2].add(index, time / simulator.getSelectionManager().getProcessors().size());
     }
 
-    private ArrayList<Double> getSources(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
+    private List<Double> getSources(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
         if (selector == SelectorType.SOURCE) {
             ArrayList<Double> sources = new ArrayList<>();
             for (int j = 0; j < iter; j++) {
@@ -223,9 +224,9 @@ public class AnalyzeTab implements TabCreator {
         return config.getSources();
     }
 
-    private ArrayList<Double> getProcessors(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
+    private List<Double> getProcessors(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
         if (selector == SelectorType.PROCESSOR) {
-            ArrayList<Double> processors = new ArrayList<>();
+            List<Double> processors = new ArrayList<>();
             for (int j = 0; j < iter; j++) {
                 processors.add(val);
             }

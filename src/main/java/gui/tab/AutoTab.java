@@ -9,7 +9,7 @@ import smo_system.simulator.Simulator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class AutoTab implements TabCreator {
     public enum ResultType {
@@ -141,7 +141,7 @@ public class AutoTab implements TabCreator {
 
     public void setResults(Analyzer analyzer, ResultType resultType) {
         if (resultType == null) return;
-        ArrayList<ArrayList<String>> results;
+        List<List<String>> results;
         JTable table;
         switch (resultType) {
             case SOURCES -> {

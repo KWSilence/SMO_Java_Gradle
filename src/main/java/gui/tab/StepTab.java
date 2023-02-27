@@ -14,7 +14,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 
 public class StepTab implements TabCreator {
     public interface OnAnalyzeStart {

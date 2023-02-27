@@ -2,7 +2,6 @@ package gui;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TableHelper {
@@ -72,10 +71,10 @@ public class TableHelper {
         }
     }
 
-    public static void fillTable(JTable table, ArrayList<ArrayList<String>> results) {
+    public static void fillTable(JTable table, List<List<String>> results) {
         initTable(table, results.size());
         for (int row = 0; row < results.size(); row++) {
-            ArrayList<String> rowElement = results.get(row);
+            List<String> rowElement = results.get(row);
             for (int column = 1; column < rowElement.size(); column++) {
                 table.setValueAt(rowElement.get(column), row, column);
             }

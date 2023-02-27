@@ -1,16 +1,14 @@
 package gui.tab;
 
-import com.google.gson.Gson;
 import configs.SimulationConfig;
 import gui.TableHelper;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class SettingsTab implements TabCreator {
     private final JPanel root;
@@ -114,7 +112,7 @@ public class SettingsTab implements TabCreator {
         root.add(saveButton);
     }
 
-    private void setTableLambdas(JTable table, ArrayList<Double> lambdas) {
+    private void setTableLambdas(JTable table, List<Double> lambdas) {
         for (int i = 0; i < lambdas.size(); i++) {
             table.setValueAt(lambdas.get(i), i, 1);
         }
