@@ -20,7 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationConfigTest {
-    private static final String TEST_DIRECTORY = "src/test/resources/";
+    private static final String TEST_DIRECTORY = "";
 
     @Test
     void testReadingCorrectConfigJSON() {
