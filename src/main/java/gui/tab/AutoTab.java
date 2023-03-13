@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
 import smo_system.analyzer.Analyzer;
@@ -69,10 +70,10 @@ public class AutoTab implements TabCreator {
         useN0CheckBox.addActionListener(e -> n0TextField.setEnabled(useN0CheckBox.isSelected()));
         //[COM]{ACTION} Tab Auto: start button
         startButton.addActionListener(e -> {
-            SimulationConfig simulationConfig = SimulationConfig.useDefaultConfigFile(debug);
+            SimulationConfig simulationConfig = MainGUI.useDefaultConfigFile(debug);
 
-            TableHelper.initTable(sourcesResultsTable, simulationConfig.getSources().size());
-            TableHelper.initTable(processorsResultsTable, simulationConfig.getProcessors().size());
+            TableHelper.initTable(sourcesResultsTable, simulationConfig.getConfig().getSources().size());
+            TableHelper.initTable(processorsResultsTable, simulationConfig.getConfig().getProcessors().size());
 
             final Integer N0;
             if (useN0CheckBox.isSelected()) {
@@ -82,7 +83,7 @@ public class AutoTab implements TabCreator {
                 N0 = null;
                 Simulator simulator = new Simulator(simulationConfig);
                 autoSimulatorThread = new SimulatorThread(simulator, true);
-                progressBar.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
+                progressBar.setMaximum(simulationConfig.getConfig().getRequestsCount());
             }
 
             progressBar.setValue(0);
@@ -120,7 +121,7 @@ public class AutoTab implements TabCreator {
         return new Thread(() -> {
             if (n0 != null) {
                 RequestCountAnalyzer analyzer = new RequestCountAnalyzer(n0, debug);
-                analyzer.analyze();
+                analyzer.analyze(MainGUI.useDefaultConfigFile(debug));
                 onProgressChanged.progressChanged(null);
                 autoSimulatorThread = new SimulatorThread(analyzer.getLastSimulator(), null);
             } else {

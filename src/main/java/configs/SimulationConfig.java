@@ -10,33 +10,46 @@ import smo_system.manager.SelectionManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SimulationConfig {
-    public static class ConfigJSON {
+    public static class ConfigJSON implements Serializable {
         private final int requestsCount;
         private final int bufferCapacity;
         private final List<Double> sources;
         private final List<Double> processors;
+        private transient boolean onError;
 
         ConfigJSON() {
-            bufferCapacity = 0;
-            requestsCount = 0;
-            sources = new ArrayList<>();
-            processors = new ArrayList<>();
+            this.bufferCapacity = 3;
+            this.requestsCount = 1000;
+            this.sources = List.of(1.0, 1.0, 1.0);
+            this.processors = List.of(1.0, 1.0);
+            this.onError = false;
         }
 
-        public ConfigJSON(List<Double> sources, List<Double> processors, int bufferCapacity, int requestsCount) {
+        public static ConfigJSON getDefaultConfig() {
+            return new ConfigJSON();
+        }
+
+        public static ConfigJSON getDefaultConfigOnError() {
+            ConfigJSON configJSON = new ConfigJSON();
+            configJSON.onError = true;
+            return configJSON;
+        }
+
+        public ConfigJSON(int requestsCount, int bufferCapacity, List<Double> sources, List<Double> processors) {
             this.bufferCapacity = bufferCapacity;
             this.requestsCount = requestsCount;
             this.sources = new ArrayList<>(sources);
             this.processors = new ArrayList<>(processors);
+            this.onError = false;
         }
 
         public List<Double> getSources() {
@@ -54,23 +67,16 @@ public class SimulationConfig {
         public int getRequestsCount() {
             return requestsCount;
         }
+
+        public boolean createdOnError() {
+            return onError;
+        }
     }
 
-    private ArrayList<Source> sources;
-    private ArrayList<Processor> processors;
-    private Buffer buffer;
-    private ProductionManager productionManager;
-    private SelectionManager selectionManager;
     private final ConfigJSON config;
-
-    public SimulationConfig(String fileName) {
-        this.config = readJSON(fileName);
-        parseConfig(config);
-    }
 
     public SimulationConfig(ConfigJSON config) {
         this.config = config;
-        parseConfig(config);
     }
 
     public ConfigJSON getConfig() {
@@ -85,74 +91,45 @@ public class SimulationConfig {
             String json = Files.readString(path, charset);
             return gson.fromJson(json, ConfigJSON.class);
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new ConfigJSON();
-    }
-
-    public static String getDefaultConfigPath(boolean debug) {
-        return debug ? "src/main/resources/config.json" : "config.json";
-    }
-
-    public static SimulationConfig useDefaultConfigFile(boolean debug) {
-        return new SimulationConfig(getDefaultConfigPath(debug));
-    }
-
-    public static ConfigJSON getDefaultConfigJSON() {
-        ArrayList<Double> defaultSources = new ArrayList<>(Arrays.asList(1.0, 1.0, 1.0));
-        ArrayList<Double> defaultProcessors = new ArrayList<>(Arrays.asList(1.0, 1.0));
-        return new ConfigJSON(defaultSources, defaultProcessors, 3, 1000);
-    }
-
-    public static void initDefaultConfigFile(boolean debug) {
-        File configFile = new File(getDefaultConfigPath(debug));
-        if (!configFile.exists()) {
-            saveConfigFile(configFile, getDefaultConfigJSON());
+            return ConfigJSON.getDefaultConfigOnError();
         }
     }
 
-    public static void saveConfigFile(File configFile, ConfigJSON config) {
-        try {
-            PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8);
+    public static boolean saveConfigFile(File configFile, ConfigJSON config) {
+        try (PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8)) {
             Gson gson = new Gson();
-            writer.print(gson.toJson(config));
-            writer.close();
+            writer.print(gson.toJson(config == null ? ConfigJSON.getDefaultConfig() : config));
+            return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
-    private void parseConfig(ConfigJSON config) {
-        this.sources = new ArrayList<>();
+    public List<Source> createSources() {
+        List<Source> sources = new ArrayList<>();
         for (int i = 0; i < config.sources.size(); i++) {
-            this.sources.add(new Source(i, config.sources.get(i)));
+            sources.add(new Source(i, config.sources.get(i)));
         }
-        this.buffer = new Buffer(config.bufferCapacity);
-        this.processors = new ArrayList<>();
-        for (int i = 0; i < config.processors.size(); i++) {
-            this.processors.add(new Processor(i, config.processors.get(i)));
-        }
-        this.productionManager = new ProductionManager(sources, buffer, config.requestsCount);
-        this.selectionManager = new SelectionManager(processors, buffer, sources.size());
-    }
-
-    public List<Source> getSources() {
         return sources;
     }
 
-    public List<Processor> getProcessors() {
+    public List<Processor> createProcessors() {
+        List<Processor> processors = new ArrayList<>();
+        for (int i = 0; i < config.processors.size(); i++) {
+            processors.add(new Processor(i, config.processors.get(i)));
+        }
         return processors;
     }
 
-    public Buffer getBuffer() {
-        return buffer;
+    public Buffer createBuffer() {
+        return new Buffer(config.bufferCapacity);
     }
 
-    public ProductionManager getProductionManager() {
-        return productionManager;
+    public ProductionManager createProductionManager(Buffer buffer) {
+        return new ProductionManager(createSources(), buffer, config.requestsCount);
     }
 
-    public SelectionManager getSelectionManager() {
-        return selectionManager;
+    public SelectionManager createSelectionManager(Buffer buffer) {
+        return new SelectionManager(createProcessors(), buffer, config.sources.size());
     }
 }

@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
 import smo_system.analyzer.Analyzer;
@@ -67,15 +68,15 @@ public class StepTab implements TabCreator {
         //[COM]{ACTION} Tab Step: start button
         startButton.addActionListener(e -> {
             if (stepSimulationThread == null) {
-                SimulationConfig simulationConfig = SimulationConfig.useDefaultConfigFile(debug);
+                SimulationConfig simulationConfig = MainGUI.useDefaultConfigFile(debug);
 
-                TableHelper.initTable(sourcesTable, simulationConfig.getSources().size());
-                TableHelper.initTable(bufferTable, simulationConfig.getBuffer().getCapacity());
-                TableHelper.initTable(processorsTable, simulationConfig.getProcessors().size());
+                TableHelper.initTable(sourcesTable, simulationConfig.getConfig().getSources().size());
+                TableHelper.initTable(bufferTable, simulationConfig.getConfig().getBufferCapacity());
+                TableHelper.initTable(processorsTable, simulationConfig.getConfig().getProcessors().size());
 
                 logArea.setText("");
 
-                progressBar.setMaximum(simulationConfig.getProductionManager().getMaxRequestCount());
+                progressBar.setMaximum(simulationConfig.getConfig().getRequestsCount());
                 progressBar.setValue(0);
 
                 stepSimulationThread = new SimulatorThread(new Simulator(simulationConfig), null);
