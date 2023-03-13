@@ -1,6 +1,8 @@
 import configs.SimulationConfig;
 import configs.SimulationConfig.ConfigJSON;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import smo_system.component.Buffer;
 import smo_system.component.Processor;
@@ -15,12 +17,31 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationConfigTest {
-    private static final String TEST_DIRECTORY = "";
+    private static final String TEST_DIRECTORY = "test_directory/";
+
+    @BeforeAll
+    static void prepareTestDir() {
+        File testDir = new File(TEST_DIRECTORY);
+        testDir.mkdir();
+    }
+
+    @AfterAll
+    static void clearTestDir() {
+        try {
+            Files.walk(Path.of(TEST_DIRECTORY))
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
 
     @Test
     void testReadingCorrectConfigJSON() {
