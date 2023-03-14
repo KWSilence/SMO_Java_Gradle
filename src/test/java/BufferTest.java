@@ -49,20 +49,26 @@ class BufferTest {
         assertTrue(buffer.isEmpty());
         assertFalse(buffer.isFull());
 
-        assertTrue(buffer.putRequest(new Request(0, 1, 1)));
+        Request request1 = new Request(0, 1, 1);
+        assertTrue(buffer.putRequest(request1));
         assertEquals(1, buffer.getSize());
         assertFalse(buffer.isEmpty());
         assertFalse(buffer.isFull());
+        assertTrue(buffer.getList().contains(request1), "buffer should add request when it is not full");
 
-        assertTrue(buffer.putRequest(new Request(0, 2, 2)));
+        Request request2 = new Request(0, 2, 2);
+        assertTrue(buffer.putRequest(request2));
         assertEquals(2, buffer.getSize());
         assertFalse(buffer.isEmpty());
         assertTrue(buffer.isFull());
+        assertTrue(buffer.getList().contains(request2), "buffer should add request when it is not full");
 
-        assertFalse(buffer.putRequest(new Request(0, 3, 3)));
+        Request request3 = new Request(0, 3, 3);
+        assertFalse(buffer.putRequest(request3));
         assertNotEquals(3, buffer.getSize());
         assertFalse(buffer.isEmpty());
         assertTrue(buffer.isFull());
+        assertFalse(buffer.getList().contains(request3), "buffer should not add request when it is full");
     }
 
     @Test
