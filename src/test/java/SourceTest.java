@@ -42,8 +42,8 @@ class SourceTest {
 
         Request request1 = source.getRequestAndGenerate();
         assertNotNull(request1, "source should generate request");
-        assertEquals(sourceNumber, request.getSourceNumber(), "request source number is not equal to its source");
-        assertEquals(1, request.getNumber(), "second request number is not 1");
+        assertEquals(sourceNumber, request1.getSourceNumber(), "request source number is not equal to its source");
+        assertEquals(1, request1.getNumber(), "second request number is not 1");
         assertEquals(2, source.getRequestCount(), "request count is not increment after getting");
     }
 

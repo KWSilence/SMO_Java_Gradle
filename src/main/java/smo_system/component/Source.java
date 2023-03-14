@@ -44,10 +44,10 @@ public class Source {
     }
 
     public Request getRequestAndGenerate() {
+        requestCount++;
         Request lastRequest = currentRequest;
         lastRequestTime = currentRequest.getTime();
         currentRequest = generateRequest();
-        requestCount++;
         return lastRequest;
     }
 
