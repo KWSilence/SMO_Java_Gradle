@@ -40,6 +40,7 @@ class ProcessorTest {
         assertEquals(0, processor.getWorkTime());
         assertEquals(0, processor.getProcessTime());
         assertFalse(processor.process(null), "processor should not process null request");
+        assertEquals(0, processor.getProcessTime());
     }
 
     @Test

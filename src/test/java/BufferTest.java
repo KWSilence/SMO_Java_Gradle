@@ -75,6 +75,8 @@ class BufferTest {
     void testPackageCreation() {
         Buffer buffer = new Buffer(4);
         assertDoesNotThrow(buffer::createPackage);
+        assertTrue(buffer.getList().isEmpty());
+        assertTrue(buffer.getRequestsPackage().isEmpty(), "package should not create with empty list");
         Map<Request, Boolean> requestsToTest = Map.of(
                 new Request(0, 1, 1.0), false,
                 new Request(0, 0, 2.0), true,
