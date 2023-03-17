@@ -66,15 +66,13 @@ public class SelectionManager {
         return counter;
     }
 
-    // todo use
     public boolean putToProcessor() {
         selectNearestWorkEvent();
         if (canTake()) {
             lastRequest = buffer.takeRequest();
             double time = takeProcessor.getProcessTime() - lastRequest.getTime();
             lastRequest.setTimeInBuffer((time > 0) ? time : 0);
-            return true;
-//            return takeProcessor.process(lastRequest);
+            return takeProcessor.process(lastRequest);
         }
         return false;
     }
