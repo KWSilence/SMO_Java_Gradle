@@ -1,7 +1,6 @@
 import configs.SimulationConfig;
 import configs.SimulationConfig.ConfigJSON;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import smo_system.component.Buffer;
@@ -63,7 +62,7 @@ class SimulationConfigTest {
 
         ConfigJSON config = SimulationConfig.readJSON(correctConfigFilePath);
         assertFalse(config.createdOnError());
-        compareConfigs(expectedConfigJSON, config);
+        CompareUtil.compareConfigs(expectedConfigJSON, config);
         configFile.delete();
     }
 
@@ -90,7 +89,7 @@ class SimulationConfigTest {
 
         ConfigJSON config = SimulationConfig.readJSON(overrideConfigFilePath);
         assertFalse(config.createdOnError());
-        compareConfigs(expectedConfigJSON, config);
+        CompareUtil.compareConfigs(expectedConfigJSON, config);
         configFile.delete();
     }
 
@@ -110,7 +109,7 @@ class SimulationConfigTest {
 
         ConfigJSON config = SimulationConfig.readJSON(invalidConfigFilePath);
         assertTrue(config.createdOnError());
-        compareConfigs(configOnError, config);
+        CompareUtil.compareConfigs(configOnError, config);
         configFile.delete();
     }
 
@@ -164,7 +163,7 @@ class SimulationConfigTest {
                 List.of(9.9, 7.8)
         );
         SimulationConfig simulationConfig = new SimulationConfig(configJSON);
-        compareConfigs(configJSON, simulationConfig.getConfig());
+        CompareUtil.compareConfigs(configJSON, simulationConfig.getConfig());
 
         List<Source> sources = simulationConfig.createSources();
         assertEquals(configJSON.getSources().size(), sources.size(), "created sources count is not correct");
@@ -212,14 +211,6 @@ class SimulationConfigTest {
 
     private String getConfigPath(Object object) {
         return TEST_DIRECTORY + object.getClass().getEnclosingMethod().getName() + ".json";
-    }
-
-    private void compareConfigs(SimulationConfig.ConfigJSON expectedConfig, SimulationConfig.ConfigJSON actualConfig) {
-        assertEquals(expectedConfig.getRequestsCount(), actualConfig.getRequestsCount());
-        assertEquals(expectedConfig.getBufferCapacity(), actualConfig.getBufferCapacity());
-        assertEquals(expectedConfig.createdOnError(), actualConfig.createdOnError());
-        CompareUtil.compareLists(expectedConfig.getSources(), actualConfig.getSources(), Assertions::assertEquals);
-        CompareUtil.compareLists(expectedConfig.getProcessors(), actualConfig.getProcessors(), Assertions::assertEquals);
     }
 
     private String getConfigStringJSON(SimulationConfig.ConfigJSON configJSON) {

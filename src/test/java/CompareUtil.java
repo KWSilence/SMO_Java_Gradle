@@ -1,3 +1,5 @@
+import configs.SimulationConfig.ConfigJSON;
+import org.junit.jupiter.api.Assertions;
 import smo_system.component.Buffer;
 import smo_system.component.Processor;
 import smo_system.component.Request;
@@ -56,6 +58,14 @@ class CompareUtil {
         Request expectedRequest = expectedProcessor.getRequest();
         Request actualRequest = actualProcessor.getRequest();
         compareRequests(expectedRequest, actualRequest);
+    }
+
+    public static void compareConfigs(ConfigJSON expectedConfig, ConfigJSON actualConfig) {
+        assertEquals(expectedConfig.getRequestsCount(), actualConfig.getRequestsCount());
+        assertEquals(expectedConfig.getBufferCapacity(), actualConfig.getBufferCapacity());
+        assertEquals(expectedConfig.createdOnError(), actualConfig.createdOnError());
+        compareLists(expectedConfig.getSources(), actualConfig.getSources(), Assertions::assertEquals);
+        compareLists(expectedConfig.getProcessors(), actualConfig.getProcessors(), Assertions::assertEquals);
     }
 
     @FunctionalInterface
