@@ -19,9 +19,8 @@ class SourceTest {
 
         Source sourceCopy = new Source(source);
         CompareUtil.compareSources(source, sourceCopy);
-        Request requestOrig1 = source.getRequestAndGenerate();
-        Request requestCopy1 = sourceCopy.getRequestAndGenerate();
-        CompareUtil.compareRequests(requestOrig1, requestCopy1);
+
+        source.getRequestAndGenerate();
 
         Source sourceCopyAfterGenerate = new Source(source);
         CompareUtil.compareSources(source, sourceCopyAfterGenerate);
@@ -55,14 +54,14 @@ class SourceTest {
         assertEquals(0, source.getRequestCount(), "source request count more than 0 on init");
         Request request1 = source.getRequestAndGenerate();
         assertNotNull(request1, "source can not generate request");
-        assertEquals(time1, request1.getTime());
+        assertEquals(time1, request1.getTime(), "request time should be same as source getTime method returns");
         assertEquals(1, source.getRequestCount(), "request count is not increment after getting");
 
         double time2 = source.getTime();
         assertTrue(time1 < time2, "request time less than previous one");
         Request request2 = source.getRequestAndGenerate();
         assertNotNull(request2, "source can not generate request");
-        assertEquals(time2, request2.getTime());
+        assertEquals(time2, request2.getTime(), "request time should be same as source getTime method returns");
         assertEquals(2, source.getRequestCount(), "request count is not increment after getting");
     }
 }

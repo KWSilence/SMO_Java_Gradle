@@ -95,8 +95,7 @@ class SimulationConfigTest {
 
     @Test
     void testReadingInvalidConfigJSON() {
-        String invalidConfigFilePath = getConfigPath(new Object() {
-        });
+        String invalidConfigFilePath = getConfigPath(new Object() {});
         String invalidConfigFileContent = "invalid content";
         ConfigJSON configOnError = ConfigJSON.getDefaultConfigOnError();
 
