@@ -9,11 +9,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Utility class to compare main components
+ **/
 class CompareUtil {
     private CompareUtil() {
         throw new IllegalStateException("Utility class");
     }
 
+    /**
+     * compare main fields of Request
+     **/
     public static void compareRequests(Request expectedRequest, Request actualRequest) {
         if (expectedRequest != null && actualRequest != null) {
             assertEquals(expectedRequest.getSourceNumber(), actualRequest.getSourceNumber());
@@ -25,6 +31,9 @@ class CompareUtil {
         }
     }
 
+    /**
+     * compare main fields of Source and its request by compareRequests
+     **/
     public static void compareSources(Source expectedSource, Source actualSource) {
         assertEquals(expectedSource.getNumber(), actualSource.getNumber());
         assertEquals(expectedSource.getLambda(), actualSource.getLambda());
@@ -33,12 +42,18 @@ class CompareUtil {
         compareRequests(expectedSource.getRequestCopy(), actualSource.getRequestCopy());
     }
 
+    /**
+     * compare main fields of Source without request and time (because it uses random)
+     **/
     public static void compareSourcesWithoutRandom(Source expectedSource, Source actualSource) {
         assertEquals(expectedSource.getNumber(), actualSource.getNumber());
         assertEquals(expectedSource.getLambda(), actualSource.getLambda());
         assertEquals(expectedSource.getRequestCount(), actualSource.getRequestCount());
     }
 
+    /**
+     * compare main fields of Buffer and its request lists by compareLists and compareRequests
+     **/
     public static void compareBuffers(Buffer expectedBuffer, Buffer actualBuffer) {
         assertEquals(expectedBuffer.getCapacity(), actualBuffer.getCapacity());
         assertEquals(expectedBuffer.getSize(), actualBuffer.getSize());
@@ -49,6 +64,9 @@ class CompareUtil {
         compareLists(expectedBuffer.getRequestsPackage(), actualBuffer.getRequestsPackage(), CompareUtil::compareRequests);
     }
 
+    /**
+     * compare main fields of Processor and its request by compareRequests
+     **/
     public static void compareProcessors(Processor expectedProcessor, Processor actualProcessor) {
         assertEquals(expectedProcessor.getNumber(), actualProcessor.getNumber());
         assertEquals(expectedProcessor.getLambda(), actualProcessor.getLambda());
@@ -60,6 +78,9 @@ class CompareUtil {
         compareRequests(expectedRequest, actualRequest);
     }
 
+    /**
+     * compare main fields of ConfigJson
+     **/
     public static void compareConfigs(ConfigJSON expectedConfig, ConfigJSON actualConfig) {
         assertEquals(expectedConfig.getRequestsCount(), actualConfig.getRequestsCount());
         assertEquals(expectedConfig.getBufferCapacity(), actualConfig.getBufferCapacity());
@@ -68,11 +89,17 @@ class CompareUtil {
         compareLists(expectedConfig.getProcessors(), actualConfig.getProcessors(), Assertions::assertEquals);
     }
 
+    /**
+     * Comparator interface to use lambda functions
+     **/
     @FunctionalInterface
     public interface Comparator<T> {
         void compare(T expected, T actual);
     }
 
+    /**
+     * compare list with comparator
+     **/
     public static <T> void compareLists(List<T> expectedList, List<T> actualList, Comparator<T> comparator) {
         assertEquals(expectedList.size(), actualList.size());
         for (int i = 0; i < expectedList.size(); ++i) {
