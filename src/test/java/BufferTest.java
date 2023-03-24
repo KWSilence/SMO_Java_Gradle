@@ -17,11 +17,20 @@ class BufferTest {
     /**
      * Test constructors:
      * Default - Buffer(int capacity). Checking initial state (main fields equal to expected initial values).
+     *     Checking invalid capacity (less than 1) throws IllegalArgumentException.
      * Copy - Buffer(Buffer). Checking equality of main fields.
      * Fields to check: capacity, size, empty/full, takeIndex, list, requestsPackage.
      **/
     @Test
     void testBufferConstructors() {
+        // create buffer with invalid capacity (less than 1)
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new Buffer(-1),
+                "Buffer with capacity < 1 should throw exception"
+        );
+        assertEquals("Buffer capacity should be greater than 0", exception.getMessage());
+
         // create buffer with capacity
         int bufferCapacity = 4;
         Buffer buffer = new Buffer(bufferCapacity);
@@ -66,20 +75,27 @@ class BufferTest {
     /**
      * Check buffer overflow.
      * Initially buffer size = 0, buffer and its lists is empty.
+     * If call 'put' to null Request returns false and state does not change.
      * Buffer size should change after putting request to buffer.
      * When the buffer size reaches capacity, the flag full = true.
      * Next call 'put' returns false, the state of the buffer does not change.
      **/
     @Test
     void testOverflow() {
-        // create buffer
-        Buffer buffer = new Buffer(2);
+        // create buffer with capacity
+        int bufferCapacity = 2;
+        Buffer buffer = new Buffer(bufferCapacity);
         // check initial state of buffer
         assertEquals(0, buffer.getSize(), "initial buffer size should be 0");
         assertTrue(buffer.isEmpty(), "buffer after creation should be empty");
         assertFalse(buffer.isFull(), "buffer after creation should not be full");
         assertTrue(buffer.getList().isEmpty(), "buffer list after creation should be empty");
         assertTrue(buffer.getRequestsPackage().isEmpty(), "buffer package list after creation should be empty");
+
+        // put null request to buffer
+        assertFalse(buffer.putRequest(null));
+        // check state is not changed after putting null Request
+        CompareUtil.compareBuffers(new Buffer(bufferCapacity), buffer);
 
         // put first request to buffer
         Request request1 = new Request(0, 1, 1);

@@ -12,6 +12,7 @@ public class Buffer {
     private int takeIndex;
 
     public Buffer(int capacity) {
+        if (capacity < 1) throw new IllegalArgumentException("Buffer capacity should be greater than 0");
         this.capacity = capacity;
         this.list = new ArrayList<>(capacity);
         this.requestsPackage = new ArrayList<>(capacity);
@@ -56,7 +57,7 @@ public class Buffer {
     }
 
     public boolean putRequest(Request request) {
-        if (list.size() < capacity) {
+        if (list.size() < capacity && request != null) {
             list.add(request);
             return true;
         }

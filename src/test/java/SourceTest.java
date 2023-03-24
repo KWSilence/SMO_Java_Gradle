@@ -13,11 +13,20 @@ class SourceTest {
     /**
      * Test constructors:
      * Default - Source(int number, double lambda). Checking initial state (main fields equal to expected initial values).
+     *     Checking invalid lambda (equal or less than 0) throws IllegalArgumentException.
      * Copy - Source(Source). Checking equality of main fields.
      * Fields to check: number, lambda, requestCount, time.
      **/
     @Test
     void testSourceConstructors() {
+        // create source with invalid lambda (equal or less than 0)
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new Source(0, -1),
+                "Source with lambda <= 0 should throw exception"
+        );
+        assertEquals("Source lambda should be greater than 0", exception.getMessage());
+
         // create source using number and lambda
         int sourceNumber = 1;
         double lambda = 1.2;

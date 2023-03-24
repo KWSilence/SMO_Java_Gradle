@@ -13,11 +13,20 @@ class ProcessorTest {
     /**
      * Test constructors:
      * Default - Processor(int number, double lambda). Checking initial state (main fields equal to expected initial values).
+     *     Checking invalid lambda (equal or less than 0) throws IllegalArgumentException.
      * Copy - Processor(Processor). Checking equality of main fields.
      * Fields to check: processorNumber, lambda, isWait, request, processTime, workTime.
      **/
     @Test
     void testProcessorConstructors() {
+        // create processor with invalid lambda (equal or less than 0)
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new Processor(0, -1),
+                "Processor with lambda <= 0 should throw exception"
+        );
+        assertEquals("Processor lambda should be greater than 0", exception.getMessage());
+
         // declare main args form default constructor
         int processorNumber = 1;
         double lambda = 1.3;

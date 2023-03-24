@@ -14,6 +14,7 @@ public class Source {
     private final Random random;
 
     public Source(int number, double lambda) {
+        if (lambda <= 0) throw new IllegalArgumentException("Source lambda should be greater than 0");
         this.number = number;
         this.lambda = lambda;
         this.lastRequestTime = 0;

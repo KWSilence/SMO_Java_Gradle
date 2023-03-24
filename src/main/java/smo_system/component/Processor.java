@@ -11,6 +11,7 @@ public class Processor {
     private boolean wait;
 
     public Processor(int number, double lambda) {
+        if (lambda <= 0) throw new IllegalArgumentException("Processor lambda should be greater than 0");
         this.number = number;
         this.lambda = lambda;
         this.workTime = 0;
