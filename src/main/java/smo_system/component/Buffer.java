@@ -1,9 +1,9 @@
 package smo_system.component;
 
-import smo_system.util.TakeUtil;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Buffer {
     private final int capacity;
@@ -12,17 +12,19 @@ public class Buffer {
     private int takeIndex;
 
     public Buffer(int capacity) {
+        if (capacity < 1) throw new IllegalArgumentException("Buffer capacity should be greater than 0");
         this.capacity = capacity;
-        this.list = new ArrayList<>();
-        this.requestsPackage = new ArrayList<>();
-        this.takeIndex = 0;
+        this.list = new ArrayList<>(capacity);
+        this.requestsPackage = new ArrayList<>(capacity);
+        this.takeIndex = -1;
     }
-
 
     public Buffer(Buffer buffer) {
         this.capacity = buffer.capacity;
-        this.list = buffer.list.stream().map(r -> TakeUtil.transformOrNull(r, Request::new)).toList();
-        this.requestsPackage = buffer.requestsPackage.stream().map(r -> TakeUtil.transformOrNull(r, Request::new)).toList();
+        Map<Request, Request> requestMap = new HashMap<>();
+        buffer.list.forEach(request -> requestMap.put(request, new Request(request)));
+        this.list = buffer.list.stream().map(requestMap::get).toList();
+        this.requestsPackage = buffer.requestsPackage.stream().map(requestMap::get).toList();
         this.takeIndex = buffer.takeIndex;
     }
 
@@ -54,11 +56,15 @@ public class Buffer {
         return capacity;
     }
 
-    public void putRequest(Request request) {
-        list.add(request);
+    public boolean putRequest(Request request) {
+        if (list.size() < capacity && request != null) {
+            list.add(request);
+            return true;
+        }
+        return false;
     }
 
-    public Request getRequest() {
+    public Request takeRequest() {
         return isEmpty() ? null : getPriorityRequest();
     }
 

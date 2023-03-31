@@ -11,6 +11,7 @@ public class Processor {
     private boolean wait;
 
     public Processor(int number, double lambda) {
+        if (lambda <= 0) throw new IllegalArgumentException("Processor lambda should be greater than 0");
         this.number = number;
         this.lambda = lambda;
         this.workTime = 0;
@@ -32,6 +33,10 @@ public class Processor {
         return number;
     }
 
+    public double getLambda() {
+        return lambda;
+    }
+
     public double getProcessTime() {
         return processTime;
     }
@@ -48,16 +53,23 @@ public class Processor {
         return workTime;
     }
 
-    public void process(Request request) {
-        currentRequest = request;
-        workTime += lambda;
-        processTime = currentRequest.getTime() + currentRequest.getTimeInBuffer() + lambda;
-        wait = false;
+    public boolean process(Request request) {
+        if (wait && request != null) {
+            currentRequest = request;
+            processTime = currentRequest.getTime() + currentRequest.getTimeInBuffer() + lambda;
+            wait = false;
+            return true;
+        }
+        return false;
     }
 
     public Request free() {
-        wait = true;
+        if (currentRequest == null) return null;
+        workTime += lambda;
         currentRequest.setTimeInProcessor(lambda);
-        return currentRequest;
+        Request requestToReturn = currentRequest;
+        currentRequest = null;
+        wait = true;
+        return requestToReturn;
     }
 }

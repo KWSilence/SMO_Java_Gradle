@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.MainGUI;
 import gui.SimulatorThread;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -129,7 +130,7 @@ public class AnalyzeTab implements TabCreator {
             @Override
             public void run() {
                 ArrayList<SimulatorThread> buffer = new ArrayList<>();
-                SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
+                SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
                 String name = getSeriesName(selector, from, to, val);
                 XYSeries[] series = new XYSeries[]{
                         new XYSeries(name),
@@ -143,7 +144,7 @@ public class AnalyzeTab implements TabCreator {
                         List<Double> processors = getProcessors(selector, i, config, val);
                         int bufferCapacity = getBufferCapacity(selector, i, config);
                         SimulationConfig.ConfigJSON configJSON = new SimulationConfig.ConfigJSON(
-                                sources, processors, bufferCapacity, config.getRequestsCount()
+                                config.getRequestsCount(), bufferCapacity, sources, processors
                         );
                         Simulator tmpSimulator = new Simulator(new SimulationConfig(configJSON));
                         buffer.add(new SimulatorThread(tmpSimulator, true));

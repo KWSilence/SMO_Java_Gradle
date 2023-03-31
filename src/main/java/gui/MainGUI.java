@@ -8,10 +8,22 @@ import gui.tab.StepTab;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import java.io.File;
 
 public class MainGUI {
+    public static String getDefaultConfigPath(boolean debug) {
+        return debug ? "src/main/resources/config.json" : "config.json";
+    }
+
+    public static SimulationConfig useDefaultConfigFile(boolean debug) {
+        return new SimulationConfig(SimulationConfig.readJSON(getDefaultConfigPath(debug)));
+    }
+
     MainGUI(boolean debug) {
-        SimulationConfig.initDefaultConfigFile(debug);
+        File defaultConfigFile = new File(getDefaultConfigPath(debug));
+        if (!defaultConfigFile.exists()) {
+            SimulationConfig.saveConfigFile(defaultConfigFile, SimulationConfig.ConfigJSON.getDefaultConfig());
+        }
 
         JFrame frame = new JFrame("test");
         frame.setLayout(new MigLayout("", "[fill, grow]", "[fill, grow]"));

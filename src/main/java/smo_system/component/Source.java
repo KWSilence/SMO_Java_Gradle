@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class Source {
     private final int number;
-    private Request lastRequest;
+    private double lastRequestTime;
     private Request currentRequest;
     private int requestCount;
     private final double lambda;
@@ -14,31 +14,41 @@ public class Source {
     private final Random random;
 
     public Source(int number, double lambda) {
+        if (lambda <= 0) throw new IllegalArgumentException("Source lambda should be greater than 0");
         this.number = number;
         this.lambda = lambda;
-        this.lastRequest = null;
-        this.currentRequest = null;
+        this.lastRequestTime = 0;
         this.requestCount = 0;
         this.random = new Random();
-        generateRequest();
+        this.currentRequest = generateRequest();
     }
 
     public Source(Source source) {
         this.number = source.number;
         this.lambda = source.lambda;
-        this.lastRequest = TakeUtil.transformOrNull(source.lastRequest, Request::new);
-        this.currentRequest = TakeUtil.transformOrNull(source.currentRequest, Request::new);
+        this.lastRequestTime = source.lastRequestTime;
         this.requestCount = source.requestCount;
         this.random = source.random;
+        this.currentRequest = TakeUtil.transformOrNull(source.currentRequest, Request::new);
     }
 
     public int getNumber() {
         return number;
     }
 
-    public Request getNewRequest() {
+    public double getLambda() {
+        return lambda;
+    }
+
+    public Request getRequestCopy() {
+        return new Request(currentRequest);
+    }
+
+    public Request getRequestAndGenerate() {
         requestCount++;
-        generateRequest();
+        Request lastRequest = currentRequest;
+        lastRequestTime = currentRequest.getTime();
+        currentRequest = generateRequest();
         return lastRequest;
     }
 
@@ -50,13 +60,8 @@ public class Source {
         return currentRequest.getTime();
     }
 
-    private void generateRequest() {
+    private Request generateRequest() {
         double additionalTime = (-1 / lambda) * Math.log(random.nextDouble());
-        if (currentRequest == null) {
-            currentRequest = new Request(requestCount, number, additionalTime);
-        } else {
-            lastRequest = currentRequest;
-            currentRequest = new Request(requestCount, number, lastRequest.getTime() + additionalTime);
-        }
+        return new Request(requestCount, number, lastRequestTime + additionalTime);
     }
 }

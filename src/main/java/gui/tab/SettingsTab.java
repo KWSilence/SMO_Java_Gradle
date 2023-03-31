@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.MainGUI;
 import gui.TableHelper;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ public class SettingsTab implements TabCreator {
 
     public SettingsTab(LayoutManager layoutManager, boolean debug) {
         this.root = new JPanel(layoutManager);
-        SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
+        SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
         //[COM]{ELEMENT} Tab Settings: sources tab
         JTable sourcesTable = TableHelper.createTable(new String[]{"SourceNumber", "Lambda"}, Collections.singletonList(1));
         TableHelper.initTableRows(sourcesTable, config.getSources().size());
@@ -84,7 +85,7 @@ public class SettingsTab implements TabCreator {
         JButton refreshButton = new JButton("Refresh");
         //[COM]{ACTION} Tab Settings: refresh button
         refreshButton.addActionListener(e -> {
-            SimulationConfig.ConfigJSON configRefresh = SimulationConfig.readJSON(SimulationConfig.getDefaultConfigPath(debug));
+            SimulationConfig.ConfigJSON configRefresh = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
             TableHelper.initTable(sourcesTable, configRefresh.getSources().size());
             setTableLambdas(sourcesTable, configRefresh.getSources());
             TableHelper.initTable(processorsTable, configRefresh.getProcessors().size());
@@ -104,9 +105,9 @@ public class SettingsTab implements TabCreator {
             int bufferCapacity = Integer.parseInt(bufferCapacityTextField.getText());
             int requestsCount = Integer.parseInt(requestCountTextField.getText());
             SimulationConfig.ConfigJSON configSave = new SimulationConfig.ConfigJSON(
-                    sources, processors, bufferCapacity, requestsCount
+                    requestsCount, bufferCapacity, sources, processors
             );
-            File configFile = new File(SimulationConfig.getDefaultConfigPath(debug));
+            File configFile = new File(MainGUI.getDefaultConfigPath(debug));
             SimulationConfig.saveConfigFile(configFile, configSave);
         });
         root.add(saveButton);

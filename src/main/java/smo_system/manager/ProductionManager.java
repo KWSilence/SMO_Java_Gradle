@@ -66,11 +66,11 @@ public class ProductionManager {
     }
 
     public void generate() {
-        lastRequest = currentSource.getNewRequest();
+        lastRequest = currentSource.getRequestAndGenerate();
         currentRequestCount++;
     }
 
-    public boolean putToBuffer() {
+    public boolean putToBufferOrReject() {
         boolean full = buffer.isFull();
         if (!full) {
             buffer.putRequest(lastRequest);

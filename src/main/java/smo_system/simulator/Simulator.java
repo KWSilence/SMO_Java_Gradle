@@ -29,19 +29,10 @@ public class Simulator {
     private Request lastRequest = null;
     private boolean nextIteration = false;
 
-    public Simulator(String fileName) {
-        SimulationConfig config = new SimulationConfig(fileName);
-
-        this.buffer = config.getBuffer();
-        this.productionManager = config.getProductionManager();
-        this.selectionManager = config.getSelectionManager();
-        this.lastEvent = new SimulatorEvent();
-    }
-
     public Simulator(SimulationConfig config) {
-        this.buffer = config.getBuffer();
-        this.productionManager = config.getProductionManager();
-        this.selectionManager = config.getSelectionManager();
+        this.buffer = config.createBuffer();
+        this.productionManager = config.createProductionManager(this.buffer);
+        this.selectionManager = config.createSelectionManager(this.buffer);
         this.lastEvent = new SimulatorEvent();
     }
 
@@ -140,7 +131,7 @@ public class Simulator {
     private void processPlaceStep() throws SimulationStepCompleteException {
         if (nextStep == SimulationStep.PLACE) {
             Request request = lastRequest;
-            boolean successPutToBuffer = productionManager.putToBuffer();
+            boolean successPutToBuffer = productionManager.putToBufferOrReject();
             boolean successTake = selectionManager.putToProcessor();
             if (successPutToBuffer) {
                 if (successTake) {
@@ -238,11 +229,10 @@ public class Simulator {
                 buffer.createPackage();
                 lastEvent.setType(SimulatorEvent.EventType.PACKAGE);
                 lastEvent.setBuffer(buffer);
-                StringBuilder s = new StringBuilder();
-                for (Request r : buffer.getRequestsPackage()) {
-                    s.append(r.getSourceNumber()).append('.').append(r.getNumber()).append(", ");
-                }
-                lastEvent.setLog("Create Package: " + s + "\n");
+                List<String> requests = buffer.getRequestsPackage().stream()
+                        .map(r -> "%d.%d".formatted(r.getSourceNumber(), r.getNumber()))
+                        .toList();
+                lastEvent.setLog("Create Package: " + String.join(", ", requests) + '\n');
                 nextStep = SimulationStep.TAKE;
                 throw new SimulationStepCompleteException(true);
             }

@@ -68,16 +68,13 @@ public class SelectionManager {
 
     public boolean putToProcessor() {
         selectNearestWorkEvent();
-
-        boolean take = canTake();
-
-        if (take) {
-            lastRequest = buffer.getRequest();
+        if (canTake()) {
+            lastRequest = buffer.takeRequest();
             double time = takeProcessor.getProcessTime() - lastRequest.getTime();
             lastRequest.setTimeInBuffer((time > 0) ? time : 0);
-            takeProcessor.process(lastRequest);
+            return takeProcessor.process(lastRequest);
         }
-        return take;
+        return false;
     }
 
     public double freeProcessor() {
