@@ -29,6 +29,9 @@ dependencies {
     implementation 'com.miglayout:miglayout:3.7.4'
     implementation 'org.jfree:jfreechart:1.5.0'
 
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.6'
+
     def junit_ver = "5.9.2"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_ver"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_ver"

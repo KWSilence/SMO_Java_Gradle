@@ -120,7 +120,7 @@ public class AutoTab implements TabCreator {
     private Thread createLineMoverThread(Integer n0, OnProgressChanged onProgressChanged, OnAnalyzeComplete onAnalyzeComplete) {
         return new Thread(() -> {
             if (n0 != null) {
-                RequestCountAnalyzer analyzer = new RequestCountAnalyzer(n0, debug);
+                RequestCountAnalyzer analyzer = new RequestCountAnalyzer(n0);
                 analyzer.analyze(MainGUI.useDefaultConfigFile(debug));
                 onProgressChanged.progressChanged(null);
                 autoSimulatorThread = new SimulatorThread(analyzer.getLastSimulator(), null);

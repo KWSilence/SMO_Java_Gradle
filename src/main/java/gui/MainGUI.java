@@ -67,6 +67,7 @@ public class MainGUI {
     }
 
     public static void main(String[] args) {
-        new MainGUI(true);
+        boolean debug = args.length > 0 && args[0].equals("--debug");
+        new MainGUI(debug);
     }
 }

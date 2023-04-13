@@ -84,7 +84,7 @@ public class AnalyzeTab implements TabCreator {
         stopButton.addActionListener(e -> {
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
-            analyzeThread.interrupt();
+            stopAnalyze();
         });
         //[COM]{ACTION} Tab Analyze: start button
         startButton.addActionListener(e -> {
@@ -179,6 +179,10 @@ public class AnalyzeTab implements TabCreator {
     }
 
     private void stopAnalyze() {
+        if (analyzeThread != null) {
+            analyzeThread.interrupt();
+            analyzeThread = null;
+        }
         if (simToAnalyze != null) {
             for (SimulatorThread simulator : simToAnalyze) {
                 simulator.interrupt();
