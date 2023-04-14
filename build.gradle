@@ -3,11 +3,12 @@ plugins {
     id 'jacoco'
 }
 
-group 'org.smo'
+group 'com.kwsilence'
 version '1.0'
 
 
 jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes "Main-Class": "gui.MainGUI"
     }
