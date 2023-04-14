@@ -1,4 +1,4 @@
-# SMO_Java_Gradle
+# ServingSystem
 build project using:
 ```bash
 ./gradlew build
