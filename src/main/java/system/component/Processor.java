@@ -1,6 +1,6 @@
-package smo_system.component;
+package system.component;
 
-import smo_system.util.TakeUtil;
+import system.util.TakeUtil;
 
 public class Processor {
     private final int number;

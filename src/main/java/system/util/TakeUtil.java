@@ -1,4 +1,4 @@
-package smo_system.util;
+package system.util;
 
 public class TakeUtil {
     private TakeUtil() {

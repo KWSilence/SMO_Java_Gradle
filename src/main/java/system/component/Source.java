@@ -1,6 +1,6 @@
-package smo_system.component;
+package system.component;
 
-import smo_system.util.TakeUtil;
+import system.util.TakeUtil;
 
 import java.util.Random;
 

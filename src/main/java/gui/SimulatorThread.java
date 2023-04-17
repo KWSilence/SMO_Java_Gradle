@@ -1,6 +1,6 @@
 package gui;
 
-import smo_system.simulator.Simulator;
+import system.simulator.Simulator;
 
 public class SimulatorThread {
     private final Simulator simulator;

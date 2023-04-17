@@ -1,4 +1,4 @@
-package smo_system.simulator;
+package system.simulator;
 
 class SimulationStepCompleteException extends Exception {
     private final boolean state;

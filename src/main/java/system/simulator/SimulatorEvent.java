@@ -1,9 +1,9 @@
-package smo_system.simulator;
+package system.simulator;
 
-import smo_system.component.Buffer;
-import smo_system.component.Processor;
-import smo_system.component.Request;
-import smo_system.util.TakeUtil;
+import system.component.Buffer;
+import system.component.Processor;
+import system.component.Request;
+import system.util.TakeUtil;
 
 public class SimulatorEvent {
     public enum EventType {

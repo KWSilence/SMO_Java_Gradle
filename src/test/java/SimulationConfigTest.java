@@ -3,11 +3,11 @@ import configs.SimulationConfig.ConfigJSON;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import smo_system.component.Buffer;
-import smo_system.component.Processor;
-import smo_system.component.Source;
-import smo_system.manager.ProductionManager;
-import smo_system.manager.SelectionManager;
+import system.component.Buffer;
+import system.component.Processor;
+import system.component.Source;
+import system.manager.ProductionManager;
+import system.manager.SelectionManager;
 
 import java.io.File;
 import java.io.IOException;

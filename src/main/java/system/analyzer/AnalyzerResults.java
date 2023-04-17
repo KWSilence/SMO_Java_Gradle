@@ -1,4 +1,4 @@
-package smo_system.analyzer;
+package system.analyzer;
 
 public class AnalyzerResults {
     int number = 0;

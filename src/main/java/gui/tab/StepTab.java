@@ -4,12 +4,12 @@ import configs.SimulationConfig;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
-import smo_system.analyzer.Analyzer;
-import smo_system.component.Buffer;
-import smo_system.component.Processor;
-import smo_system.component.Request;
-import smo_system.simulator.Simulator;
-import smo_system.simulator.SimulatorEvent;
+import system.analyzer.Analyzer;
+import system.component.Buffer;
+import system.component.Processor;
+import system.component.Request;
+import system.simulator.Simulator;
+import system.simulator.SimulatorEvent;
 
 import javax.swing.*;
 import java.awt.*;

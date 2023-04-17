@@ -1,11 +1,11 @@
-package smo_system.analyzer;
+package system.analyzer;
 
-import smo_system.component.Processor;
-import smo_system.component.Request;
-import smo_system.component.Source;
-import smo_system.manager.ProductionManager;
-import smo_system.manager.SelectionManager;
-import smo_system.simulator.Simulator;
+import system.component.Processor;
+import system.component.Request;
+import system.component.Source;
+import system.manager.ProductionManager;
+import system.manager.SelectionManager;
+import system.simulator.Simulator;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

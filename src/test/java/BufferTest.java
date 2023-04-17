@@ -1,8 +1,8 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
-import smo_system.component.Buffer;
-import smo_system.component.Request;
+import system.component.Buffer;
+import system.component.Request;
 
 import java.util.List;
 import java.util.Map;

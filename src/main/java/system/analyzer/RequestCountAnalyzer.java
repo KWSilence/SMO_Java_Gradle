@@ -1,9 +1,9 @@
-package smo_system.analyzer;
+package system.analyzer;
 
 import configs.SimulationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import smo_system.simulator.Simulator;
+import system.simulator.Simulator;
 
 public class RequestCountAnalyzer {
     private final int n0;

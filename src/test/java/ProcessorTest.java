@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
-import smo_system.component.Processor;
-import smo_system.component.Request;
+import system.component.Processor;
+import system.component.Request;
 
 import static org.junit.jupiter.api.Assertions.*;
 

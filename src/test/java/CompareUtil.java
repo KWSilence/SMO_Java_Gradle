@@ -1,9 +1,9 @@
 import configs.SimulationConfig.ConfigJSON;
 import org.junit.jupiter.api.Assertions;
-import smo_system.component.Buffer;
-import smo_system.component.Processor;
-import smo_system.component.Request;
-import smo_system.component.Source;
+import system.component.Buffer;
+import system.component.Processor;
+import system.component.Request;
+import system.component.Source;
 
 import java.util.List;
 

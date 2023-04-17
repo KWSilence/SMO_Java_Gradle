@@ -1,8 +1,8 @@
-package smo_system.manager;
+package system.manager;
 
-import smo_system.component.Buffer;
-import smo_system.component.Processor;
-import smo_system.component.Request;
+import system.component.Buffer;
+import system.component.Processor;
+import system.component.Request;
 
 import java.util.ArrayList;
 import java.util.List;

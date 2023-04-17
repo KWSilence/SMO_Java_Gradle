@@ -1,4 +1,4 @@
-package smo_system.component;
+package system.component;
 
 import java.util.ArrayList;
 import java.util.HashMap;

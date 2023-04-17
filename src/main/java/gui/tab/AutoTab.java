@@ -4,9 +4,9 @@ import configs.SimulationConfig;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
-import smo_system.analyzer.Analyzer;
-import smo_system.analyzer.RequestCountAnalyzer;
-import smo_system.simulator.Simulator;
+import system.analyzer.Analyzer;
+import system.analyzer.RequestCountAnalyzer;
+import system.simulator.Simulator;
 
 import javax.swing.*;
 import java.awt.*;

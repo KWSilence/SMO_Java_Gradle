@@ -10,9 +10,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import smo_system.component.Processor;
-import smo_system.component.Request;
-import smo_system.simulator.Simulator;
+import system.component.Processor;
+import system.component.Request;
+import system.simulator.Simulator;
 
 import javax.swing.*;
 import java.awt.*;
