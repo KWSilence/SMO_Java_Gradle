@@ -92,15 +92,15 @@ public class AnalyzeTab implements TabCreator {
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             SelectorType selector = SelectorType.values()[selectorCombobox.getSelectedIndex()];
-            int from = Integer.parseInt(fromTextField.getText());
-            int to = Integer.parseInt(toTextField.getText());
-            double val = Double.parseDouble(lambdaTextField.getText());
-            int step = Integer.parseInt(visualStepTextField.getText());
+            int minCount = Integer.parseInt(fromTextField.getText());
+            int maxCount = Integer.parseInt(toTextField.getText());
+            double lambda = Double.parseDouble(lambdaTextField.getText());
+            int visualisationStep = Integer.parseInt(visualStepTextField.getText());
             JFreeChart[] charts = new JFreeChart[]{rejectProbabilityChart, lifeTimeChart, processorsUsingRateChart};
             for (JFreeChart chart : charts) {
                 chart.getXYPlot().setDataset(null);
             }
-            analyze(selector, from, to, val, step,
+            analyze(selector, minCount, maxCount, lambda, visualisationStep,
                     series -> {
                         for (int index = 0; index < series.length; ++index) {
                             charts[index].getXYPlot().setDataset(new XYSeriesCollection(series[index]));
@@ -119,7 +119,15 @@ public class AnalyzeTab implements TabCreator {
         return ChartFactory.createXYLineChart(title, xl, yl, ds, PlotOrientation.VERTICAL, true, true, true);
     }
 
-    private void analyze(SelectorType selector, int from, int to, double val, int count, OnSeriesUpdate onSeriesUpdate, OnAnalyzeComplete onAnalyzeComplete) {
+    private void analyze(
+            SelectorType selector,
+            int minCount,
+            int maxCount,
+            double lambda,
+            int visualisationStep,
+            OnSeriesUpdate onSeriesUpdate,
+            OnAnalyzeComplete onAnalyzeComplete
+    ) {
         analyzeThread = new Thread() {
             private void checkInterruption() throws InterruptedException {
                 if (isInterrupted()) {
@@ -131,24 +139,24 @@ public class AnalyzeTab implements TabCreator {
             public void run() {
                 ArrayList<SimulatorThread> buffer = new ArrayList<>();
                 SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
-                String name = getSeriesName(selector, from, to, val);
+                String name = getSeriesName(selector, minCount, maxCount, lambda);
                 XYSeries[] series = new XYSeries[]{
                         new XYSeries(name),
                         new XYSeries(name),
                         new XYSeries(name)
                 };
                 try {
-                    for (int i = from; i <= to; i++) {
+                    for (int i = minCount; i <= maxCount; i++) {
                         checkInterruption();
-                        List<Double> sources = getSources(selector, i, config, val);
-                        List<Double> processors = getProcessors(selector, i, config, val);
+                        List<Double> sources = getSources(selector, i, config, lambda);
+                        List<Double> processors = getProcessors(selector, i, config, lambda);
                         int bufferCapacity = getBufferCapacity(selector, i, config);
                         SimulationConfig.ConfigJSON configJSON = new SimulationConfig.ConfigJSON(
                                 config.getRequestsCount(), bufferCapacity, sources, processors
                         );
                         Simulator tmpSimulator = new Simulator(new SimulationConfig(configJSON));
                         buffer.add(new SimulatorThread(tmpSimulator, true));
-                        if (i >= to || buffer.size() >= count) {
+                        if (i >= maxCount || buffer.size() >= visualisationStep) {
                             checkInterruption();
                             simToAnalyze.addAll(buffer);
                             buffer.forEach(SimulatorThread::start);
@@ -192,12 +200,12 @@ public class AnalyzeTab implements TabCreator {
         }
     }
 
-    private String getSeriesName(SelectorType selector, int from, int to, double val) {
+    private String getSeriesName(SelectorType selector, int minCount, int maxCount, double lambda) {
         String name;
         switch (selector) {
-            case SOURCE -> name = "Source[" + from + ":" + to + "], lambda=" + val;
-            case PROCESSOR -> name = "Processor[" + from + ":" + to + "], lambda=" + val;
-            case BUFFER -> name = "BufferCapacity[" + from + ":" + to + "]";
+            case SOURCE -> name = "Source[" + minCount + ":" + maxCount + "], lambda=" + lambda;
+            case PROCESSOR -> name = "Processor[" + minCount + ":" + maxCount + "], lambda=" + lambda;
+            case BUFFER -> name = "BufferCapacity[" + minCount + ":" + maxCount + "]";
             default -> name = "";
         }
         return name;
