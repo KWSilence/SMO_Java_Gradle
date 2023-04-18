@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import configs.SimulationConfig.ConfigJSON;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import org.jfree.chart.ChartFactory;
@@ -165,16 +166,14 @@ public class AnalyzeTab implements TabCreator {
             @Override
             public void run() {
                 ArrayList<SimulatorThread> buffer = new ArrayList<>();
-                SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
+                ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
                 try {
                     for (int i = minCount; i <= maxCount; i++) {
                         checkInterruption();
                         List<Double> sources = getSources(selector, i, config, lambda);
                         List<Double> processors = getProcessors(selector, i, config, lambda);
                         int bufferCapacity = getBufferCapacity(selector, i, config);
-                        SimulationConfig.ConfigJSON configJSON = new SimulationConfig.ConfigJSON(
-                                config.getRequestsCount(), bufferCapacity, sources, processors
-                        );
+                        ConfigJSON configJSON = new ConfigJSON(config.getRequestsCount(), bufferCapacity, sources, processors);
                         Simulator tmpSimulator = new Simulator(new SimulationConfig(configJSON));
                         SimulatorThread tmpSimulatorThread = new SimulatorThread(tmpSimulator, true);
                         buffer.add(tmpSimulatorThread);
@@ -268,7 +267,7 @@ public class AnalyzeTab implements TabCreator {
         onSeriesUpdate.seriesUpdate(SeriesType.PROCESSORS_USING_RATE, index, avgProcessorsUsingRate);
     }
 
-    private List<Double> getSources(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
+    private List<Double> getSources(SelectorType selector, int iter, ConfigJSON config, double val) {
         if (selector == SelectorType.SOURCE) {
             ArrayList<Double> sources = new ArrayList<>();
             for (int j = 0; j < iter; j++) {
@@ -279,7 +278,7 @@ public class AnalyzeTab implements TabCreator {
         return config.getSources();
     }
 
-    private List<Double> getProcessors(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
+    private List<Double> getProcessors(SelectorType selector, int iter, ConfigJSON config, double val) {
         if (selector == SelectorType.PROCESSOR) {
             List<Double> processors = new ArrayList<>();
             for (int j = 0; j < iter; j++) {
@@ -290,7 +289,7 @@ public class AnalyzeTab implements TabCreator {
         return config.getProcessors();
     }
 
-    private int getBufferCapacity(SelectorType selector, int iter, SimulationConfig.ConfigJSON config) {
+    private int getBufferCapacity(SelectorType selector, int iter, ConfigJSON config) {
         if (selector == SelectorType.BUFFER) {
             return iter;
         }
