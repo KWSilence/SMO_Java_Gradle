@@ -88,9 +88,9 @@ public class AnalyzeTab implements TabCreator {
         root.add(startButton);
         //[COM]{ACTION} Tab Analyze: stop button
         stopButton.addActionListener(e -> {
+            stopAnalyze();
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
-            stopAnalyze();
         });
         //[COM]{ACTION} Tab Analyze: start button
         startButton.addActionListener(e -> {
@@ -126,9 +126,9 @@ public class AnalyzeTab implements TabCreator {
                         }
                     },
                     () -> {
+                        stopAnalyze();
                         startButton.setEnabled(true);
                         stopButton.setEnabled(false);
-                        stopAnalyze();
                     }
             );
         });
@@ -158,12 +158,6 @@ public class AnalyzeTab implements TabCreator {
             public void run() {
                 ArrayList<SimulatorThread> buffer = new ArrayList<>();
                 SimulationConfig.ConfigJSON config = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
-                String name = getSeriesName(selector, minCount, maxCount, lambda);
-                XYSeries[] series = new XYSeries[]{
-                        new XYSeries(name),
-                        new XYSeries(name),
-                        new XYSeries(name)
-                };
                 try {
                     for (int i = minCount; i <= maxCount; i++) {
                         checkInterruption();
@@ -174,21 +168,22 @@ public class AnalyzeTab implements TabCreator {
                                 config.getRequestsCount(), bufferCapacity, sources, processors
                         );
                         Simulator tmpSimulator = new Simulator(new SimulationConfig(configJSON));
-                        buffer.add(new SimulatorThread(tmpSimulator, true));
+                        SimulatorThread tmpSimulatorThread = new SimulatorThread(tmpSimulator, true);
+                        buffer.add(tmpSimulatorThread);
+                        tmpSimulatorThread.start();
                         if (i >= maxCount || buffer.size() >= visualisationStep) {
                             checkInterruption();
                             simToAnalyze.addAll(buffer);
-                            buffer.forEach(SimulatorThread::start);
+                            buffer.clear();
                             int ind = 1;
-                            for (SimulatorThread simulatorThread : buffer) {
+                            for (SimulatorThread simulatorThread : simToAnalyze) {
                                 simulatorThread.join();
                                 checkInterruption();
                                 Simulator simulator = simulatorThread.getSimulator();
-                                int index = i - buffer.size() + ind;
+                                int index = i - simToAnalyze.size() + ind;
                                 addSeries(index, onSeriesUpdate, simulator, config.getRequestsCount());
                                 ind++;
                             }
-                            buffer.clear();
                             checkInterruption();
                             simToAnalyze.clear();
                         }
