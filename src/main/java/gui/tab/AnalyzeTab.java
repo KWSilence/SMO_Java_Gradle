@@ -210,14 +210,34 @@ public class AnalyzeTab implements TabCreator {
     }
 
     private String getSeriesName(SelectorType selector, int minCount, int maxCount, double lambda) {
-        String name;
+        StringBuilder stringBuilder = new StringBuilder();
         switch (selector) {
-            case SOURCE -> name = "Source[" + minCount + ":" + maxCount + "], lambda=" + lambda;
-            case PROCESSOR -> name = "Processor[" + minCount + ":" + maxCount + "], lambda=" + lambda;
-            case BUFFER -> name = "BufferCapacity[" + minCount + ":" + maxCount + "]";
-            default -> name = "";
+            case SOURCE -> {
+                stringBuilder.append("Source[");
+                stringBuilder.append(minCount);
+                stringBuilder.append(":");
+                stringBuilder.append(maxCount);
+                stringBuilder.append("], lambda=");
+                stringBuilder.append(lambda);
+            }
+            case PROCESSOR -> {
+                stringBuilder.append("Processor[");
+                stringBuilder.append(minCount);
+                stringBuilder.append(":");
+                stringBuilder.append(maxCount);
+                stringBuilder.append("], lambda=");
+                stringBuilder.append(lambda);
+            }
+            case BUFFER ->{
+                stringBuilder.append("BufferCapacity[");
+                stringBuilder.append(minCount);
+                stringBuilder.append(":");
+                stringBuilder.append(maxCount);
+                stringBuilder.append("]");
+            }
+            default -> stringBuilder.append("NONE");
         }
-        return name;
+        return stringBuilder.toString();
     }
 
     private void addSeries(int index, OnSeriesUpdate onSeriesUpdate, Simulator simulator, int requestCount) {
