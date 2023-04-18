@@ -42,7 +42,7 @@ public class AnalyzeTab implements TabCreator {
 
     private final JPanel root;
     private final boolean debug;
-    private ArrayList<SimulatorThread> simToAnalyze = new ArrayList<>();
+    private final ArrayList<SimulatorThread> simToAnalyze = new ArrayList<>();
     private Thread analyzeThread = null;
 
     public AnalyzeTab(LayoutManager layoutManager, boolean debug) {
@@ -94,7 +94,6 @@ public class AnalyzeTab implements TabCreator {
         });
         //[COM]{ACTION} Tab Analyze: start button
         startButton.addActionListener(e -> {
-            simToAnalyze = new ArrayList<>();
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             SelectorType selector = SelectorType.values()[selectorCombobox.getSelectedIndex()];
@@ -114,7 +113,7 @@ public class AnalyzeTab implements TabCreator {
             series.put(SeriesType.LIFE_TIME, new XYSeries(name));
             series.put(SeriesType.PROCESSORS_USING_RATE, new XYSeries(name));
 
-            for (SeriesType type: charts.keySet()) {
+            for (SeriesType type : charts.keySet()) {
                 charts.get(type).getXYPlot().setDataset(new XYSeriesCollection(series.get(type)));
             }
 
@@ -204,13 +203,10 @@ public class AnalyzeTab implements TabCreator {
             analyzeThread.interrupt();
             analyzeThread = null;
         }
-        if (simToAnalyze != null) {
-            for (SimulatorThread simulator : simToAnalyze) {
-                simulator.interrupt();
-            }
-            simToAnalyze.clear();
-            simToAnalyze = null;
+        for (SimulatorThread simulator : simToAnalyze) {
+            simulator.interrupt();
         }
+        simToAnalyze.clear();
     }
 
     private String getSeriesName(SelectorType selector, int minCount, int maxCount, double lambda) {
