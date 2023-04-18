@@ -21,7 +21,7 @@ import java.util.List;
 
 public class AnalyzeTab implements TabCreator {
     private enum SelectorType {
-        SOURCE, PROCESSOR, BUFFER;
+        SOURCE, PROCESSOR, BUFFER
     }
 
     @FunctionalInterface
