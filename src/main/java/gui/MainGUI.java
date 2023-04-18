@@ -25,7 +25,7 @@ public class MainGUI {
             SimulationConfig.saveConfigFile(defaultConfigFile, SimulationConfig.ConfigJSON.getDefaultConfig());
         }
 
-        JFrame frame = new JFrame("test");
+        JFrame frame = new JFrame("Service System");
         frame.setLayout(new MigLayout("", "[fill, grow]", "[fill, grow]"));
 
         JTabbedPane tabbedPane = new JTabbedPane();
