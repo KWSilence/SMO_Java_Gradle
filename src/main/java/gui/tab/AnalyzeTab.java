@@ -12,6 +12,8 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import system.component.Processor;
 import system.component.Request;
+import system.manager.ProductionManager;
+import system.manager.SelectionManager;
 import system.simulator.Simulator;
 
 import javax.swing.*;
@@ -228,7 +230,7 @@ public class AnalyzeTab implements TabCreator {
                 stringBuilder.append("], lambda=");
                 stringBuilder.append(lambda);
             }
-            case BUFFER ->{
+            case BUFFER -> {
                 stringBuilder.append("BufferCapacity[");
                 stringBuilder.append(minCount);
                 stringBuilder.append(":");
@@ -241,29 +243,22 @@ public class AnalyzeTab implements TabCreator {
     }
 
     private void addSeries(int index, OnSeriesUpdate onSeriesUpdate, Simulator simulator, int requestCount) {
-        onSeriesUpdate.seriesUpdate(
-                SeriesType.REJECT_PROBABILITY,
-                index,
-                ((double) simulator.getProductionManager().getFullRejectCount() / (double) requestCount)
-        );
-        double time = 0;
-        for (List<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
-            time += requests.stream().mapToDouble(Request::getLifeTime).sum();
+        SelectionManager selectionManager = simulator.getSelectionManager();
+        ProductionManager productionManager = simulator.getProductionManager();
+        double rejectProbability = (double) productionManager.getFullRejectCount() / requestCount;
+        onSeriesUpdate.seriesUpdate(SeriesType.REJECT_PROBABILITY, index, rejectProbability);
+        double totalRequestsLifeTime = 0;
+        for (List<Request> requests : selectionManager.getSuccessRequests()) {
+            totalRequestsLifeTime += requests.stream().mapToDouble(Request::getLifeTime).sum();
         }
-        onSeriesUpdate.seriesUpdate(
-                SeriesType.LIFE_TIME,
-                index,
-                time / simulator.getSelectionManager().getFullSuccessCount()
-        );
-        time = 0;
-        for (Processor p : simulator.getSelectionManager().getProcessors()) {
-            time += p.getWorkTime() / simulator.getEndTime();
+        double avgLifeTime = totalRequestsLifeTime / selectionManager.getFullSuccessCount();
+        onSeriesUpdate.seriesUpdate(SeriesType.LIFE_TIME, index, avgLifeTime);
+        double totalAvgProcessorUsingRate = 0;
+        for (Processor processor : selectionManager.getProcessors()) {
+            totalAvgProcessorUsingRate += processor.getWorkTime() / simulator.getEndTime();
         }
-        onSeriesUpdate.seriesUpdate(
-                SeriesType.PROCESSORS_USING_RATE,
-                index,
-                time / simulator.getSelectionManager().getProcessors().size()
-        );
+        double avgProcessorsUsingRate = totalAvgProcessorUsingRate / selectionManager.getProcessors().size();
+        onSeriesUpdate.seriesUpdate(SeriesType.PROCESSORS_USING_RATE, index, avgProcessorsUsingRate);
     }
 
     private List<Double> getSources(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
