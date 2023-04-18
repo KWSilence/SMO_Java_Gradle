@@ -17,11 +17,17 @@ import system.simulator.Simulator;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AnalyzeTab implements TabCreator {
     private enum SelectorType {
         SOURCE, PROCESSOR, BUFFER
+    }
+
+    private enum SeriesType {
+        REJECT_PROBABILITY, LIFE_TIME, PROCESSORS_USING_RATE
     }
 
     @FunctionalInterface
@@ -31,7 +37,7 @@ public class AnalyzeTab implements TabCreator {
 
     @FunctionalInterface
     private interface OnSeriesUpdate {
-        void seriesUpdate(XYSeries[] series);
+        void seriesUpdate(SeriesType type, double x, double y);
     }
 
     private final JPanel root;
@@ -96,14 +102,27 @@ public class AnalyzeTab implements TabCreator {
             int maxCount = Integer.parseInt(toTextField.getText());
             double lambda = Double.parseDouble(lambdaTextField.getText());
             int visualisationStep = Integer.parseInt(visualStepTextField.getText());
-            JFreeChart[] charts = new JFreeChart[]{rejectProbabilityChart, lifeTimeChart, processorsUsingRateChart};
-            for (JFreeChart chart : charts) {
-                chart.getXYPlot().setDataset(null);
+
+            Map<SeriesType, JFreeChart> charts = new HashMap<>(3);
+            charts.put(SeriesType.REJECT_PROBABILITY, rejectProbabilityChart);
+            charts.put(SeriesType.LIFE_TIME, lifeTimeChart);
+            charts.put(SeriesType.PROCESSORS_USING_RATE, processorsUsingRateChart);
+
+            String name = getSeriesName(selector, minCount, maxCount, lambda);
+            Map<SeriesType, XYSeries> series = new HashMap<>(3);
+            series.put(SeriesType.REJECT_PROBABILITY, new XYSeries(name));
+            series.put(SeriesType.LIFE_TIME, new XYSeries(name));
+            series.put(SeriesType.PROCESSORS_USING_RATE, new XYSeries(name));
+
+            for (SeriesType type: charts.keySet()) {
+                charts.get(type).getXYPlot().setDataset(new XYSeriesCollection(series.get(type)));
             }
+
             analyze(selector, minCount, maxCount, lambda, visualisationStep,
-                    series -> {
-                        for (int index = 0; index < series.length; ++index) {
-                            charts[index].getXYPlot().setDataset(new XYSeriesCollection(series[index]));
+                    (type, index, value) -> {
+                        XYSeries xySeries = series.get(type);
+                        if (xySeries != null) {
+                            xySeries.add(index, value);
                         }
                     },
                     () -> {
@@ -166,10 +185,9 @@ public class AnalyzeTab implements TabCreator {
                                 checkInterruption();
                                 Simulator simulator = simulatorThread.getSimulator();
                                 int index = i - buffer.size() + ind;
-                                addSeries(index, series, simulator, config.getRequestsCount());
+                                addSeries(index, onSeriesUpdate, simulator, config.getRequestsCount());
                                 ind++;
                             }
-                            onSeriesUpdate.seriesUpdate(series);
                             buffer.clear();
                             checkInterruption();
                             simToAnalyze.clear();
@@ -211,19 +229,30 @@ public class AnalyzeTab implements TabCreator {
         return name;
     }
 
-    private void addSeries(int index, XYSeries[] series, Simulator simulator, int requestCount) {
-        series[0].add(index, ((double) simulator.getProductionManager().getFullRejectCount() /
-                (double) requestCount));
+    private void addSeries(int index, OnSeriesUpdate onSeriesUpdate, Simulator simulator, int requestCount) {
+        onSeriesUpdate.seriesUpdate(
+                SeriesType.REJECT_PROBABILITY,
+                index,
+                ((double) simulator.getProductionManager().getFullRejectCount() / (double) requestCount)
+        );
         double time = 0;
         for (List<Request> requests : simulator.getSelectionManager().getSuccessRequests()) {
             time += requests.stream().mapToDouble(Request::getLifeTime).sum();
         }
-        series[1].add(index, time / simulator.getSelectionManager().getFullSuccessCount());
+        onSeriesUpdate.seriesUpdate(
+                SeriesType.LIFE_TIME,
+                index,
+                time / simulator.getSelectionManager().getFullSuccessCount()
+        );
         time = 0;
         for (Processor p : simulator.getSelectionManager().getProcessors()) {
             time += p.getWorkTime() / simulator.getEndTime();
         }
-        series[2].add(index, time / simulator.getSelectionManager().getProcessors().size());
+        onSeriesUpdate.seriesUpdate(
+                SeriesType.PROCESSORS_USING_RATE,
+                index,
+                time / simulator.getSelectionManager().getProcessors().size()
+        );
     }
 
     private List<Double> getSources(SelectorType selector, int iter, SimulationConfig.ConfigJSON config, double val) {
