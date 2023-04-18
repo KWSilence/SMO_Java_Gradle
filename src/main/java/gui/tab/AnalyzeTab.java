@@ -94,6 +94,21 @@ public class AnalyzeTab implements TabCreator {
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
         });
+
+        Map<SeriesType, JFreeChart> charts = new HashMap<>(3);
+        charts.put(SeriesType.REJECT_PROBABILITY, rejectProbabilityChart);
+        charts.put(SeriesType.LIFE_TIME, lifeTimeChart);
+        charts.put(SeriesType.PROCESSORS_USING_RATE, processorsUsingRateChart);
+
+        Map<SeriesType, XYSeries> series = new HashMap<>(3);
+        series.put(SeriesType.REJECT_PROBABILITY, new XYSeries("None"));
+        series.put(SeriesType.LIFE_TIME, new XYSeries("None"));
+        series.put(SeriesType.PROCESSORS_USING_RATE, new XYSeries("None"));
+
+        for (SeriesType type : charts.keySet()) {
+            charts.get(type).getXYPlot().setDataset(new XYSeriesCollection(series.get(type)));
+        }
+
         //[COM]{ACTION} Tab Analyze: start button
         startButton.addActionListener(e -> {
             startButton.setEnabled(false);
@@ -104,19 +119,11 @@ public class AnalyzeTab implements TabCreator {
             double lambda = Double.parseDouble(lambdaTextField.getText());
             int visualisationStep = Integer.parseInt(visualStepTextField.getText());
 
-            Map<SeriesType, JFreeChart> charts = new HashMap<>(3);
-            charts.put(SeriesType.REJECT_PROBABILITY, rejectProbabilityChart);
-            charts.put(SeriesType.LIFE_TIME, lifeTimeChart);
-            charts.put(SeriesType.PROCESSORS_USING_RATE, processorsUsingRateChart);
-
             String name = getSeriesName(selector, minCount, maxCount, lambda);
-            Map<SeriesType, XYSeries> series = new HashMap<>(3);
-            series.put(SeriesType.REJECT_PROBABILITY, new XYSeries(name));
-            series.put(SeriesType.LIFE_TIME, new XYSeries(name));
-            series.put(SeriesType.PROCESSORS_USING_RATE, new XYSeries(name));
-
-            for (SeriesType type : charts.keySet()) {
-                charts.get(type).getXYPlot().setDataset(new XYSeriesCollection(series.get(type)));
+            for (SeriesType type : series.keySet()) {
+                XYSeries xySeries = series.get(type);
+                xySeries.clear();
+                xySeries.setKey(name);
             }
 
             analyze(selector, minCount, maxCount, lambda, visualisationStep,
