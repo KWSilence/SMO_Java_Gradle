@@ -182,14 +182,13 @@ public class AnalyzeTab implements TabCreator {
                             checkInterruption();
                             simToAnalyze.addAll(buffer);
                             buffer.clear();
-                            int ind = 1;
-                            for (SimulatorThread simulatorThread : simToAnalyze) {
-                                simulatorThread.join();
+                            for (int ind = 0; ind  < simToAnalyze.size(); ind++) {
                                 checkInterruption();
+                                SimulatorThread simulatorThread = simToAnalyze.get(ind);
+                                simulatorThread.join();
                                 Simulator simulator = simulatorThread.getSimulator();
-                                int index = i - simToAnalyze.size() + ind;
+                                int index = i - simToAnalyze.size() + ind + 1;
                                 addSeries(index, onSeriesUpdate, simulator, config.getRequestsCount());
-                                ind++;
                             }
                             checkInterruption();
                             simToAnalyze.clear();
@@ -200,6 +199,10 @@ public class AnalyzeTab implements TabCreator {
                     Thread.currentThread().interrupt();
                 } finally {
                     onAnalyzeComplete.analyzeComplete();
+                    for (SimulatorThread simulatorThread: buffer) {
+                        simulatorThread.interrupt();
+                    }
+                    buffer.clear();
                 }
             }
         };
