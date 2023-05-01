@@ -36,6 +36,8 @@ dependencies {
     def junit_ver = "5.9.2"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_ver"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_ver"
+
+    testImplementation 'org.assertj:assertj-swing-junit:3.17.1'
 }
 
 test.finalizedBy(jacocoTestReport)

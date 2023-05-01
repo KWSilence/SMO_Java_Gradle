@@ -20,7 +20,11 @@
         </encoder>
     </appender>
 
-    <root level="TRACE">
+    <logger name="configs" level="OFF"/>
+    <logger name="gui" level="OFF"/>
+    <logger name="system" level="OFF"/>
+
+    <root level="DEBUG">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>

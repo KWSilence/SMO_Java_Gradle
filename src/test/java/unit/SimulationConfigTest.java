@@ -1,3 +1,5 @@
+package unit;
+
 import configs.SimulationConfig;
 import configs.SimulationConfig.ConfigJSON;
 import org.junit.jupiter.api.AfterAll;
