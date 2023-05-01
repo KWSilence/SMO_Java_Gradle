@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.ComponentHelper.AutoHelper;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
@@ -29,6 +30,7 @@ public class AutoTab implements TabCreator {
 
     private Thread lineMover = null;
     private SimulatorThread autoSimulatorThread = null;
+    private RequestCountAnalyzer requestCountAnalyzer = null;
     private final boolean debug;
     private final JPanel root;
     private final JTable sourcesResultsTable;
@@ -54,16 +56,20 @@ public class AutoTab implements TabCreator {
         root.add(progressBar);
         //[COM]{ELEMENT} Tab Auto: stop button
         JButton stopButton = new JButton("Stop");
+        stopButton.setName(AutoHelper.stop);
         stopButton.setEnabled(false);
         root.add(stopButton, "split 4");
         //[COM]{ELEMENT} Tab Auto: start button
         JButton startButton = new JButton("Start Auto");
+        startButton.setName(AutoHelper.start);
         root.add(startButton);
         //[COM]{ELEMENT} Tab Auto: use N0 checkbox
         JCheckBox useN0CheckBox = new JCheckBox("Use N0");
+        useN0CheckBox.setName(AutoHelper.useN0);
         root.add(useN0CheckBox);
         //[COM]{ELEMENT} Tab Auto: "N0" text field
-        JTextField n0TextField = new JTextField("100");
+        JTextField n0TextField = new JTextField("10000");
+        n0TextField.setName(AutoHelper.n0);
         n0TextField.setEnabled(false);
         root.add(n0TextField);
         //[COM]{ACTION} Tab Auto: use N0 checkbox
@@ -96,8 +102,7 @@ public class AutoTab implements TabCreator {
                     analyzer -> {
                         setResults(analyzer, ResultType.SOURCES);
                         setResults(analyzer, ResultType.PROCESSORS);
-
-                        autoSimulatorThread = null;
+                        stopAuto();
                         startButton.setEnabled(true);
                         stopButton.setEnabled(false);
                     }
@@ -106,12 +111,7 @@ public class AutoTab implements TabCreator {
         });
         //[COM]{ACTION} Tab Auto: stop button
         stopButton.addActionListener(e -> {
-            lineMover.interrupt();
-            SimulatorThread simulatorThread = autoSimulatorThread;
-            if (simulatorThread != null) {
-                simulatorThread.interrupt();
-                autoSimulatorThread = null;
-            }
+            stopAuto();
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
         });
@@ -119,31 +119,38 @@ public class AutoTab implements TabCreator {
 
     private Thread createLineMoverThread(Integer n0, OnProgressChanged onProgressChanged, OnAnalyzeComplete onAnalyzeComplete) {
         return new Thread(() -> {
-            if (n0 != null) {
-                RequestCountAnalyzer analyzer = new RequestCountAnalyzer(n0);
-                analyzer.analyze(MainGUI.useDefaultConfigFile(debug));
-                onProgressChanged.progressChanged(null);
-                autoSimulatorThread = new SimulatorThread(analyzer.getLastSimulator(), null);
-            } else {
-                SimulatorThread simulatorThread = autoSimulatorThread;
-                simulatorThread.start();
-                while (true) {
-                    if (simulatorThread.isInterrupted()) return;
-                    if (!simulatorThread.isAlive()) break;
-                    onProgressChanged.progressChanged(simulatorThread.getSimulator().getProgress());
+            Analyzer analyzer = null;
+            try {
+                if (n0 != null) {
+                    requestCountAnalyzer = new RequestCountAnalyzer(n0, MainGUI.useDefaultConfigFile(debug));
+                    requestCountAnalyzer.start();
+                    requestCountAnalyzer.join();
+                    onProgressChanged.progressChanged(null);
+                    autoSimulatorThread = new SimulatorThread(requestCountAnalyzer.getLastSimulator(), null);
+                } else {
+                    autoSimulatorThread.start();
+                    while (autoSimulatorThread.isAlive()) {
+                        if (autoSimulatorThread.isInterrupted()) throw new InterruptedException();
+                        onProgressChanged.progressChanged(autoSimulatorThread.getSimulator().getProgress());
+                    }
+                    onProgressChanged.progressChanged(autoSimulatorThread.getSimulator().getProgress());
                 }
+                if (!Thread.currentThread().isInterrupted()) {
+                    analyzer = new Analyzer(autoSimulatorThread.getSimulator());
+                    analyzer.analyze(true);
+                }
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            } finally {
+                onAnalyzeComplete.analyzeCompleted(analyzer);
             }
-
-            Analyzer analyzer = new Analyzer(autoSimulatorThread.getSimulator());
-            analyzer.analyze(true);
-            onAnalyzeComplete.analyzeCompleted(analyzer);
         });
     }
 
     public void setResults(Analyzer analyzer, ResultType resultType) {
-        if (resultType == null) return;
-        List<List<String>> results;
-        JTable table;
+        if (analyzer == null || resultType == null) return;
+        List<List<String>> results = null;
+        JTable table = null;
         switch (resultType) {
             case SOURCES -> {
                 results = analyzer.getSourceResults();
@@ -153,15 +160,26 @@ public class AutoTab implements TabCreator {
                 results = analyzer.getProcessorResults();
                 table = processorsResultsTable;
             }
-            default -> {
-                results = null;
-                table = null;
-            }
         }
         if (table == null) return;
         TableHelper.clearTable(table);
         if (results == null || results.isEmpty()) return;
         TableHelper.fillTable(table, results);
+    }
+
+    private void stopAuto() {
+        if (lineMover != null) {
+            lineMover.interrupt();
+            lineMover = null;
+        }
+        if (requestCountAnalyzer != null) {
+            requestCountAnalyzer.interrupt();
+            requestCountAnalyzer = null;
+        }
+        if (autoSimulatorThread != null) {
+            autoSimulatorThread.interrupt();
+            autoSimulatorThread = null;
+        }
     }
 
     @Override

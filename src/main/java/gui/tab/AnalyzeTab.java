@@ -2,6 +2,7 @@ package gui.tab;
 
 import configs.SimulationConfig;
 import configs.SimulationConfig.ConfigJSON;
+import gui.ComponentHelper.AnalyzeHelper;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import org.jfree.chart.ChartFactory;
@@ -62,32 +63,43 @@ public class AnalyzeTab implements TabCreator {
         JFreeChart processorsUsingRateChart = createChart("ProcessorsUsingRate", "Count", "Rate", null);
         root.add(new ChartPanel(processorsUsingRateChart), "wrap");
         //[COM]{ELEMENT} Tab Analyze: selection of variable element combobox
-        JComboBox<String> selectorCombobox = new JComboBox<>(new String[]{"Source", "Processor", "Buffer"});
+        JComboBox<String> selectorCombobox = new JComboBox<>(new String[]{
+                AnalyzeHelper.selectorSourceOption,
+                AnalyzeHelper.selectorProcessorOption,
+                AnalyzeHelper.selectorBufferOption
+        });
+        selectorCombobox.setName(AnalyzeHelper.selector);
         root.add(selectorCombobox);
         //[COM]{ELEMENT} Tab Analyze: "from" text field
         root.add(new JLabel("From"), "split 8");
         JTextField fromTextField = new JTextField("10");
+        fromTextField.setName(AnalyzeHelper.from);
         root.add(fromTextField);
         //[COM]{ELEMENT} Tab Analyze: "to" text field
         root.add(new JLabel("To"));
         JTextField toTextField = new JTextField("100");
+        toTextField.setName(AnalyzeHelper.to);
         root.add(toTextField);
         //[COM]{ELEMENT} Tab Analyze: "lambda" text field
         root.add(new JLabel("Lambda"));
         JTextField lambdaTextField = new JTextField("1.0");
+        lambdaTextField.setName(AnalyzeHelper.lambda);
         root.add(lambdaTextField);
         //[COM]{ELEMENT} Tab Analyze: visualization step for charts text field -- threads count
         root.add(new JLabel("VStep"));
         JTextField visualStepTextField = new JTextField("5");
+        visualStepTextField.setName(AnalyzeHelper.visualStep);
         root.add(visualStepTextField);
         //[COM]{ACTION} Tab Analyze: combobox change buffer->!lambda
         selectorCombobox.addActionListener(e -> lambdaTextField.setEnabled(selectorCombobox.getSelectedIndex() != 2));
         //[COM]{ELEMENT} Tab Analyze: stop button
         JButton stopButton = new JButton("Stop");
+        stopButton.setName(AnalyzeHelper.stop);
         stopButton.setEnabled(false);
         root.add(stopButton, "split 2");
         //[COM]{ELEMENT} Tab Analyze: start button
         JButton startButton = new JButton("Launch");
+        startButton.setName(AnalyzeHelper.start);
         root.add(startButton);
         //[COM]{ACTION} Tab Analyze: stop button
         stopButton.addActionListener(e -> {
@@ -182,7 +194,7 @@ public class AnalyzeTab implements TabCreator {
                             checkInterruption();
                             simToAnalyze.addAll(buffer);
                             buffer.clear();
-                            for (int ind = 0; ind  < simToAnalyze.size(); ind++) {
+                            for (int ind = 0; ind < simToAnalyze.size(); ind++) {
                                 checkInterruption();
                                 SimulatorThread simulatorThread = simToAnalyze.get(ind);
                                 simulatorThread.join();
@@ -199,7 +211,7 @@ public class AnalyzeTab implements TabCreator {
                     Thread.currentThread().interrupt();
                 } finally {
                     onAnalyzeComplete.analyzeComplete();
-                    for (SimulatorThread simulatorThread: buffer) {
+                    for (SimulatorThread simulatorThread : buffer) {
                         simulatorThread.interrupt();
                     }
                     buffer.clear();

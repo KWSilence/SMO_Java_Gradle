@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.ComponentHelper.SettingsHelper;
 import gui.MainGUI;
 import gui.TableHelper;
 
@@ -29,9 +30,11 @@ public class SettingsTab implements TabCreator {
         root.add(new JScrollPane(processorsTable), "wrap");
         //[COM]{ELEMENT} Tab Settings: sources count text field
         JTextField sourcesCountTextField = new JTextField(String.valueOf(config.getSources().size()));
+        sourcesCountTextField.setName(SettingsHelper.sourcesCount);
         root.add(sourcesCountTextField, "split 2");
         //[COM]{ELEMENT} Tab Settings: set sources count button
         JButton setSourcesCountButton = new JButton("Set sources count");
+        setSourcesCountButton.setName(SettingsHelper.sourcesCountSet);
         //[COM]{ACTION} Tab Settings: set sources count button
         setSourcesCountButton.addActionListener(e ->
                 TableHelper.addOrDeleteRows(sourcesTable, Integer.parseInt(sourcesCountTextField.getText()))
@@ -39,9 +42,11 @@ public class SettingsTab implements TabCreator {
         root.add(setSourcesCountButton);
         //[COM]{ELEMENT} Tab Settings: processors count text field
         JTextField processorsCountTextField = new JTextField(String.valueOf(config.getProcessors().size()));
+        processorsCountTextField.setName(SettingsHelper.processorsCount);
         root.add(processorsCountTextField, "split 2");
         //[COM]{ELEMENT} Tab Settings: set processors count button
         JButton setProcessorsCountButton = new JButton("Set processors count");
+        setProcessorsCountButton.setName(SettingsHelper.processorsCountSet);
         //[COM]{ACTION} Tab Settings: set processors count button
         setProcessorsCountButton.addActionListener(e ->
                 TableHelper.addOrDeleteRows(processorsTable, Integer.parseInt(processorsCountTextField.getText()))
@@ -49,9 +54,11 @@ public class SettingsTab implements TabCreator {
         root.add(setProcessorsCountButton, "wrap");
         //[COM]{ELEMENT} Tab Settings: source lambdas text field
         JTextField sourcesLambdaTextField = new JTextField("1.0");
+        sourcesLambdaTextField.setName(SettingsHelper.sourcesLambdas);
         root.add(sourcesLambdaTextField, "split 2");
         //[COM]{ELEMENT} Tab Settings: set source lambdas button
         JButton setSourcesLambdaButton = new JButton("Set sources lambdas");
+        setSourcesLambdaButton.setName(SettingsHelper.sourcesLambdasSet);
         //[COM]{ACTION} Tab Settings: set source Lambdas button
         setSourcesLambdaButton.addActionListener(e -> {
             String val = sourcesLambdaTextField.getText();
@@ -62,9 +69,11 @@ public class SettingsTab implements TabCreator {
         root.add(setSourcesLambdaButton);
         //[COM]{ELEMENT} Tab Settings: processor lambdas text field
         JTextField processorsLambdaTextField = new JTextField("1.0");
+        processorsLambdaTextField.setName(SettingsHelper.processorsLambdas);
         root.add(processorsLambdaTextField, "split 2");
         //[COM]{ELEMENT} Tab Settings: set processor lambdas button
         JButton setProcessorsLambdaButton = new JButton("Set processors lambdas");
+        setProcessorsLambdaButton.setName(SettingsHelper.processorsLambdasSet);
         //[COM]{ACTION} Tab Settings: set processor lambdas button
         setProcessorsLambdaButton.addActionListener(e -> {
             String val = processorsLambdaTextField.getText();
@@ -76,28 +85,21 @@ public class SettingsTab implements TabCreator {
         //[COM]{ELEMENT} Tab Settings: buffer capacity text field
         root.add(new JLabel("Buffer Capacity"), "split 4");
         JTextField bufferCapacityTextField = new JTextField(String.valueOf(config.getBufferCapacity()));
+        bufferCapacityTextField.setName(SettingsHelper.bufferCapacity);
         root.add(bufferCapacityTextField);
         //[COM]{ELEMENT} Tab Settings: request count text field
         root.add(new JLabel("Requests Count"));
         JTextField requestCountTextField = new JTextField(String.valueOf(config.getRequestsCount()));
+        requestCountTextField.setName(SettingsHelper.requestsCount);
         root.add(requestCountTextField);
         //[COM]{ELEMENT} Tab Settings: refresh button
         JButton refreshButton = new JButton("Refresh");
-        //[COM]{ACTION} Tab Settings: refresh button
-        refreshButton.addActionListener(e -> {
-            SimulationConfig.ConfigJSON configRefresh = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
-            TableHelper.initTable(sourcesTable, configRefresh.getSources().size());
-            setTableLambdas(sourcesTable, configRefresh.getSources());
-            TableHelper.initTable(processorsTable, configRefresh.getProcessors().size());
-            setTableLambdas(processorsTable, configRefresh.getProcessors());
-            sourcesCountTextField.setText(String.valueOf(configRefresh.getSources().size()));
-            processorsCountTextField.setText(String.valueOf(configRefresh.getProcessors().size()));
-            bufferCapacityTextField.setText(String.valueOf(configRefresh.getBufferCapacity()));
-            requestCountTextField.setText(String.valueOf(configRefresh.getRequestsCount()));
-        });
+        refreshButton.setName(SettingsHelper.refresh);
         root.add(refreshButton, "split 2");
         //[COM]{ELEMENT} Tab Settings: save button
         JButton saveButton = new JButton("Save");
+        saveButton.setName(SettingsHelper.save);
+        root.add(saveButton);
         //[COM]{ACTION} Tab Settings: save button
         saveButton.addActionListener(e -> {
             ArrayList<Double> sources = getTableLambdas(sourcesTable);
@@ -110,7 +112,18 @@ public class SettingsTab implements TabCreator {
             File configFile = new File(MainGUI.getDefaultConfigPath(debug));
             SimulationConfig.saveConfigFile(configFile, configSave);
         });
-        root.add(saveButton);
+        //[COM]{ACTION} Tab Settings: refresh button
+        refreshButton.addActionListener(e -> {
+            SimulationConfig.ConfigJSON configRefresh = SimulationConfig.readJSON(MainGUI.getDefaultConfigPath(debug));
+            TableHelper.initTable(sourcesTable, configRefresh.getSources().size());
+            setTableLambdas(sourcesTable, configRefresh.getSources());
+            TableHelper.initTable(processorsTable, configRefresh.getProcessors().size());
+            setTableLambdas(processorsTable, configRefresh.getProcessors());
+            sourcesCountTextField.setText(String.valueOf(configRefresh.getSources().size()));
+            processorsCountTextField.setText(String.valueOf(configRefresh.getProcessors().size()));
+            bufferCapacityTextField.setText(String.valueOf(configRefresh.getBufferCapacity()));
+            requestCountTextField.setText(String.valueOf(configRefresh.getRequestsCount()));
+        });
     }
 
     private void setTableLambdas(JTable table, List<Double> lambdas) {

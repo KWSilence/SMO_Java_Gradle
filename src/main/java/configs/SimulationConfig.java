@@ -28,7 +28,7 @@ public class SimulationConfig {
 
         ConfigJSON() {
             this.bufferCapacity = 3;
-            this.requestsCount = 1000;
+            this.requestsCount = 10000;
             this.sources = List.of(1.0, 1.0, 1.0);
             this.processors = List.of(1.0, 1.0);
             this.onError = false;

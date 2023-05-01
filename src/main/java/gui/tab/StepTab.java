@@ -1,6 +1,7 @@
 package gui.tab;
 
 import configs.SimulationConfig;
+import gui.ComponentHelper.StepHelper;
 import gui.MainGUI;
 import gui.SimulatorThread;
 import gui.TableHelper;
@@ -26,6 +27,7 @@ public class StepTab implements TabCreator {
     private Runnable stepTask = null;
     private boolean skipState = false;
     private final NumberFormat formatter = new DecimalFormat("#0.000");
+    private final JButton[] buttons;
 
     public StepTab(LayoutManager layoutManager, boolean debug, OnAnalyzeStart onAnalyzeStart) {
         this.root = new JPanel(layoutManager);
@@ -50,17 +52,22 @@ public class StepTab implements TabCreator {
         root.add(progressBar);
         //[COM]{ELEMENT} Tab Step: stop button
         JButton stopButton = new JButton("Stop");
+        stopButton.setName(StepHelper.stop);
         stopButton.setEnabled(false);
         root.add(stopButton, "split 4");
         //[COM]{ELEMENT} Tab Step: start button
         JButton startButton = new JButton("Start Steps");
+        startButton.setName(StepHelper.start);
         root.add(startButton);
         //[COM]{ELEMENT} Tab Step: skip button
         JButton skipButton = new JButton("Skip");
+        skipButton.setName(StepHelper.skip);
         skipButton.setEnabled(false);
         root.add(skipButton);
+        buttons = new JButton[]{startButton, stopButton, skipButton};
         //[COM]{ELEMENT} Tab Step: auto scroll checkbox
         JCheckBox autoScrollCheckBox = new JCheckBox("textAutoScroll");
+        autoScrollCheckBox.setName(StepHelper.autoScroll);
         root.add(autoScrollCheckBox);
         //[COM]{ACTION} Tab Step: auto scroll event using checkbox
         logScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> e.getAdjustable().setValue(
@@ -80,16 +87,16 @@ public class StepTab implements TabCreator {
                 progressBar.setValue(0);
 
                 stepSimulationThread = new SimulatorThread(new Simulator(simulationConfig), null);
-                SimulatorThread simulatorThread = stepSimulationThread;
 
                 startButton.setText("Next Step");
                 stopButton.setEnabled(true);
                 skipButton.setEnabled(true);
 
-                Simulator finalSimulator = simulatorThread.getSimulator();
                 stepTask = () -> {
+                    SimulatorThread simulatorThread = stepSimulationThread;
+                    Simulator finalSimulator = simulatorThread.getSimulator();
                     do {
-                        finalSimulator.simulationStep();
+                        stepSimulationThread.getSimulator().simulationStep();
                         SimulatorEvent event = finalSimulator.getLastEvent();
                         switch (event.getType()) {
                             case GENERATE -> processGenerate(event, sourcesTable, logArea);
@@ -99,10 +106,7 @@ public class StepTab implements TabCreator {
                             case REJECT -> processReject(event, sourcesTable, logArea);
                             case RELEASE -> processRelease(event, processorsTable, logArea);
                             case WORK_END -> processWorkEnd(event, startButton, skipButton, logArea);
-                            case ANALYZE -> {
-                                JButton[] buttons = new JButton[]{startButton, stopButton, skipButton};
-                                processAnalyze(finalSimulator, buttons, logArea, onAnalyzeStart);
-                            }
+                            case ANALYZE -> processAnalyze(finalSimulator, buttons, logArea, onAnalyzeStart);
                         }
                         progressBar.setValue(finalSimulator.getProgress());
                     } while (skipState && finalSimulator.canContinue() && !simulatorThread.isInterrupted());
@@ -115,11 +119,12 @@ public class StepTab implements TabCreator {
         stopButton.addActionListener(e -> {
             stepSimulationThread.interrupt();
             stepSimulationThread = null;
+            stepTask = null;
+            skipState = false;
             startButton.setText("Start Steps");
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
             skipButton.setEnabled(false);
-            skipState = false;
         });
         //[COM]{ACTION} Tab Step: skip button
         skipButton.addActionListener(e -> {

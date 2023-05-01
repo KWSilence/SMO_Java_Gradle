@@ -6,6 +6,7 @@ import gui.tab.AutoTab;
 import gui.tab.SettingsTab;
 import gui.tab.StepTab;
 import net.miginfocom.swing.MigLayout;
+import gui.ComponentHelper.MainHelper;
 
 import javax.swing.*;
 import java.io.File;
@@ -19,22 +20,26 @@ public class MainGUI {
         return new SimulationConfig(SimulationConfig.readJSON(getDefaultConfigPath(debug)));
     }
 
-    MainGUI(boolean debug) {
+    private final JFrame root;
+
+    public MainGUI(boolean debug) {
         File defaultConfigFile = new File(getDefaultConfigPath(debug));
         if (!defaultConfigFile.exists()) {
             SimulationConfig.saveConfigFile(defaultConfigFile, SimulationConfig.ConfigJSON.getDefaultConfig());
         }
 
-        JFrame frame = new JFrame("Service System");
-        frame.setLayout(new MigLayout("", "[fill, grow]", "[fill, grow]"));
+        root = new JFrame(MainHelper.title);
+        root.setName(MainHelper.root);
+        root.setLayout(new MigLayout("", "[fill, grow]", "[fill, grow]"));
 
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setName(MainHelper.tabbedPane);
 
         AutoTab autoTab = new AutoTab(
                 new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"),
                 debug
         );
-        tabbedPane.addTab("auto", autoTab.getRoot());
+        tabbedPane.addTab(MainHelper.autoTabTitle, autoTab.getRoot());
 
         StepTab stepTab = new StepTab(
                 new MigLayout("", "[fill, grow]", "[fill, grow][fill, grow][]"),
@@ -45,29 +50,36 @@ public class MainGUI {
                     tabbedPane.setSelectedIndex(0);
                 }
         );
-        tabbedPane.addTab("step", stepTab.getRoot());
+        tabbedPane.addTab(MainHelper.stepTabTitle, stepTab.getRoot());
 
         AnalyzeTab analyzeTab = new AnalyzeTab(
                 new MigLayout("", "[fill, grow]", "[fill, grow][]"),
                 debug
         );
-        tabbedPane.addTab("analyze", analyzeTab.getRoot());
+        tabbedPane.addTab(MainHelper.analyzeTabTitle, analyzeTab.getRoot());
 
         SettingsTab settingsTab = new SettingsTab(
                 new MigLayout("", "[grow,fill]", "[grow,fill][]"),
                 debug
         );
-        tabbedPane.addTab("settings", settingsTab.getRoot());
+        tabbedPane.addTab(MainHelper.settingsTabTitle, settingsTab.getRoot());
 
-        frame.add(tabbedPane);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        frame.setSize(1280, 720);
-        frame.setVisible(true);
+        root.add(tabbedPane);
+        root.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    public void showWindow() {
+        root.setSize(1280, 720);
+        root.setLocationRelativeTo(null);
+        root.setVisible(true);
+    }
+
+    public JFrame getRoot() {
+        return root;
     }
 
     public static void main(String[] args) {
         boolean debug = args.length > 0 && args[0].equals("--debug");
-        new MainGUI(debug);
+        new MainGUI(debug).showWindow();
     }
 }
